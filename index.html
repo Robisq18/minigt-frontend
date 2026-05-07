@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MINI GT Brunei — Pre-Order</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --red:#C0272D;--red-dark:#8B1A1D;--red-light:#FAECEC;
+      --gold:#D4A017;--gold-light:#FDF3D8;
+      --bg:#F5F4F2;--surface:#FFFFFF;--text:#1A1A1A;--muted:#6B6B6B;
+      --border:rgba(0,0,0,0.10);--radius:10px;
+      --font-head:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;
+    }
+    body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
+    .nav{background:var(--red);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
+    .nav-brand{font-family:var(--font-head);color:#fff;font-size:22px;letter-spacing:1px;display:flex;align-items:center;gap:10px}
+    .nav-brand span{background:rgba(255,255,255,0.15);padding:2px 8px;border-radius:4px;font-size:14px;letter-spacing:0;font-family:var(--font-body);font-weight:600}
+    .nav-tabs{display:flex;gap:4px}
+    .nav-tab{background:none;border:none;color:rgba(255,255,255,0.75);padding:6px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:14px;font-weight:500;transition:all .15s}
+    .nav-tab:hover{background:rgba(255,255,255,0.15);color:#fff}
+    .nav-tab.active{background:rgba(255,255,255,0.2);color:#fff}
+    .page{display:none;padding:24px;max-width:900px;margin:0 auto}
+    .page.active{display:block}
+    .batch-banner{background:var(--red);color:#fff;border-radius:12px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+    .batch-banner h2{font-family:var(--font-head);font-size:28px;letter-spacing:1px}
+    .batch-banner p{font-size:13px;opacity:.85;margin-top:2px}
+    .deadline-box{background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 16px;text-align:center}
+    .deadline-box .label{font-size:11px;opacity:.7;text-transform:uppercase;letter-spacing:.5px}
+    .deadline-box .countdown{font-family:var(--font-head);font-size:26px;letter-spacing:2px}
+    .section-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px;margin-bottom:16px}
+    .cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:32px}
+    .car-card{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);overflow:hidden;transition:transform .15s,box-shadow .15s;cursor:pointer}
+    .car-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.10)}
+    .car-card.selected{border:2px solid var(--red);box-shadow:0 0 0 4px rgba(192,39,45,0.12)}
+    .car-img{width:100%;height:130px;object-fit:cover;background:#F0EFED;display:flex;align-items:center;justify-content:center;font-size:48px}
+    .car-img img{width:100%;height:130px;object-fit:cover}
+    .car-info{padding:10px 12px}
+    .car-scale{font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+    .car-name{font-size:13px;font-weight:600;line-height:1.3;margin:2px 0 6px}
+    .car-price{font-family:var(--font-head);font-size:18px;color:var(--red);letter-spacing:.5px}
+    .car-price span{font-size:12px;font-family:var(--font-body);font-weight:400;color:var(--muted)}
+    .car-select-btn{width:100%;border:none;background:var(--red-light);color:var(--red);font-size:12px;font-weight:600;padding:7px;cursor:pointer;transition:background .15s;font-family:var(--font-body)}
+    .car-card.selected .car-select-btn{background:var(--red);color:#fff}
+    .closed-banner{background:#F5F4F2;border:0.5px solid var(--border);border-radius:12px;padding:48px;text-align:center;margin-bottom:24px}
+    .closed-banner h2{font-family:var(--font-head);font-size:32px;color:var(--muted);margin-bottom:8px}
+    .order-section{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:20px 24px;margin-bottom:24px}
+    .order-section h3{font-size:15px;font-weight:600;margin-bottom:16px}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .form-row.full{grid-template-columns:1fr}
+    .field{display:flex;flex-direction:column;gap:4px}
+    .field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+    .field input,.field select{border:0.5px solid var(--border);border-radius:6px;padding:8px 12px;font-size:14px;font-family:var(--font-body);background:var(--surface);color:var(--text);outline:none;transition:border .15s;width:100%}
+    .field input:focus,.field select:focus{border-color:var(--red)}
+    .phone-row{display:flex;gap:8px}
+    .phone-row .phone-code{width:110px;flex-shrink:0}
+    .phone-row .phone-num{flex:1}
+    .btn{border:none;padding:9px 16px;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;white-space:nowrap}
+    .btn-outline{background:transparent;border:0.5px solid var(--border);color:var(--text)}
+    .btn-outline:hover{border-color:var(--red);color:var(--red)}
+    .btn-red{background:var(--red);color:#fff}
+    .btn-red:hover{background:var(--red-dark)}
+    .btn-red:disabled{opacity:.4;cursor:not-allowed}
+    .btn-sm{padding:7px 12px;font-size:13px}
+    .sms-status{font-size:12px;margin-top:4px;padding:6px 10px;border-radius:5px;display:none}
+    .sms-status.sent{display:block;background:#E8F5E9;color:#2E7D32}
+    .sms-status.error{display:block;background:var(--red-light);color:var(--red)}
+    .sms-status.verified{display:block;background:#E8F5E9;color:#2E7D32;font-weight:600}
+    .summary-items{display:flex;flex-direction:column;gap:8px;margin-bottom:12px}
+    .summary-item{display:flex;justify-content:space-between;align-items:center;font-size:14px}
+    .summary-item .name{color:var(--muted)}
+    .summary-total{border-top:0.5px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;font-weight:600;font-size:15px}
+    .qty-ctrl{display:flex;align-items:center;gap:6px}
+    .qty-ctrl button{width:24px;height:24px;border:0.5px solid var(--border);border-radius:4px;background:none;cursor:pointer;font-size:14px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:center}
+    .qty-ctrl span{font-size:14px;font-weight:600;min-width:16px;text-align:center}
+    .steps{display:flex;align-items:center;gap:0;margin-bottom:20px}
+    .step{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+    .step.active{color:var(--red)}
+    .step.done{color:#2E7D32}
+    .step-num{width:22px;height:22px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0}
+    .step-line{flex:1;height:1px;background:var(--border);margin:0 6px}
+    .cart-badge{background:var(--red);color:#fff;border-radius:50%;width:18px;height:18px;font-size:11px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;margin-left:6px}
+    .toast{position:fixed;bottom:24px;right:24px;background:#1A1A1A;color:#fff;padding:12px 18px;border-radius:8px;font-size:14px;font-weight:500;z-index:9999;display:none;max-width:280px}
+    .toast.show{display:block}
+    /* ADMIN */
+    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+    .admin-card{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:20px}
+    .admin-card h3{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+    .admin-card .big{font-family:var(--font-head);font-size:36px;color:var(--text)}
+    .admin-card .sub{font-size:12px;color:var(--muted);margin-top:2px}
+    .admin-section{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:20px 24px;margin-bottom:20px}
+    .admin-section h3{font-size:15px;font-weight:600;margin-bottom:16px;padding-bottom:10px;border-bottom:0.5px solid var(--border)}
+    .table-wrap{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th{text-align:left;padding:8px 10px;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:0.5px solid var(--border)}
+    td{padding:9px 10px;border-bottom:0.5px solid var(--border)}
+    tr:last-child td{border-bottom:none}
+    .badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600}
+    .badge-green{background:#E8F5E9;color:#2E7D32}
+    .badge-red{background:var(--red-light);color:var(--red)}
+    .badge-gray{background:#F0F0F0;color:var(--muted)}
+    .products-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+    .product-row{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--bg);border-radius:6px}
+    .product-row .prod-img{width:44px;height:36px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;background:#E0DDD8}
+    .product-row .prod-img img{width:100%;height:100%;object-fit:cover}
+    .product-row .prod-info{flex:1}
+    .product-row .prod-name{font-size:13px;font-weight:600}
+    .product-row .prod-meta{font-size:12px;color:var(--muted)}
+    .product-row .prod-actions{display:flex;gap:6px}
+    .toggle-btn{padding:6px 14px;border-radius:6px;border:0.5px solid var(--border);background:none;font-size:13px;font-weight:500;cursor:pointer;font-family:var(--font-body);color:var(--muted);transition:all .15s}
+    .toggle-btn.active{background:var(--red);color:#fff;border-color:var(--red)}
+    .loading{text-align:center;padding:40px;color:var(--muted);font-size:14px}
+    .error-box{background:var(--red-light);color:var(--red);padding:12px 16px;border-radius:8px;font-size:14px;margin-bottom:16px}
+    @media(max-width:600px){
+      .form-row{grid-template-columns:1fr}
+      .admin-grid{grid-template-columns:1fr}
+      .batch-banner{flex-direction:column}
+      .page{padding:16px}
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">🚗 MINI GT <span>Brunei</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('shop',this)">Pre-Order</button>
+    <button class="nav-tab" onclick="showPage('admin',this)">Admin ⚙</button>
+  </div>
+</nav>
+
+<!-- SHOP PAGE -->
+<div class="page active" id="page-shop">
+  <div id="shop-loading" class="loading">Loading current batch...</div>
+
+  <div id="shop-open" style="display:none">
+    <div class="batch-banner">
+      <div>
+        <div style="font-size:12px;opacity:.75;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Current Batch</div>
+        <h2 id="batch-title"></h2>
+        <p id="batch-desc"></p>
+      </div>
+      <div class="deadline-box">
+        <div class="label">Closes in</div>
+        <div class="countdown" id="countdown">--:--:--</div>
+        <div style="font-size:11px;opacity:.6;margin-top:2px" id="deadline-text"></div>
+      </div>
+    </div>
+
+    <div class="section-title">Available Models <span style="font-size:14px;font-family:var(--font-body);font-weight:400;color:var(--muted)" id="model-count"></span></div>
+    <div class="cars-grid" id="cars-grid"></div>
+
+    <div id="order-form-wrap" style="display:none">
+      <div class="steps">
+        <div class="step active" id="step1"><div class="step-num">1</div> Your Info</div>
+        <div class="step-line"></div>
+        <div class="step" id="step2"><div class="step-num">2</div> Verify Phone</div>
+        <div class="step-line"></div>
+        <div class="step" id="step3"><div class="step-num">3</div> Confirm</div>
+      </div>
+
+      <!-- STEP 1 -->
+      <div id="form-step1">
+        <div class="order-section">
+          <h3>📋 Your Order</h3>
+          <div class="summary-items" id="order-summary-items"></div>
+          <div class="summary-total"><span>Total</span><span id="order-total">BND $0.00</span></div>
+        </div>
+        <div class="order-section">
+          <h3>👤 Customer Details</h3>
+          <div id="form-error" class="error-box" style="display:none"></div>
+          <div class="form-row">
+            <div class="field"><label>Full Name</label><input type="text" id="cust-name" placeholder="e.g. Ahmad Abdullah"></div>
+            <div class="field"><label>WhatsApp / Phone</label>
+              <div class="phone-row">
+                <select class="phone-code" id="phone-code">
+                  <option value="+673">🇧🇳 +673</option>
+                  <option value="+60">🇲🇾 +60</option>
+                  <option value="+65">🇸🇬 +65</option>
+                  <option value="+62">🇮🇩 +62</option>
+                </select>
+                <input class="phone-num" type="tel" id="phone-num" placeholder="7XXXXXXX">
+              </div>
+            </div>
+          </div>
+          <div class="form-row full">
+            <div class="field"><label>Delivery Address (optional)</label><input type="text" id="cust-addr" placeholder="Block, street, district..."></div>
+          </div>
+          <div style="margin-top:12px;display:flex;justify-content:flex-end">
+            <button class="btn btn-red" onclick="goStep2()">Next: Verify Phone →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div id="form-step2" style="display:none">
+        <div class="order-section">
+          <h3>📱 Phone Verification</h3>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:16px">We'll send a 6-digit code to <strong id="phone-display"></strong> via SMS to confirm this number is yours.</p>
+          <div class="form-row full">
+            <div class="field">
+              <label>Sending code to</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="phone-confirm-display" readonly style="background:var(--bg);flex:1">
+                <button class="btn btn-outline btn-sm" id="send-code-btn" onclick="sendVerificationCode()">Send Code</button>
+              </div>
+              <div class="sms-status" id="sms-sent-msg"></div>
+            </div>
+          </div>
+          <div class="form-row full" id="code-input-wrap" style="display:none">
+            <div class="field">
+              <label>Enter 6-Digit Code</label>
+              <div style="display:flex;gap:8px">
+                <input type="text" id="verify-code" placeholder="123456" maxlength="6" style="letter-spacing:4px;font-size:18px;font-weight:600;text-align:center;flex:1">
+                <button class="btn btn-red btn-sm" onclick="verifyCode()">Verify</button>
+              </div>
+              <div class="sms-status" id="verify-status"></div>
+            </div>
+          </div>
+          <div style="margin-top:16px;display:flex;justify-content:space-between">
+            <button class="btn btn-outline btn-sm" onclick="goStep1()">← Back</button>
+            <button class="btn btn-red" id="proceed-confirm-btn" onclick="goStep3()" style="display:none">Next: Confirm →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div id="form-step3" style="display:none">
+        <div class="order-section">
+          <h3>✅ Confirm Your Pre-Order</h3>
+          <div id="final-summary" style="font-size:14px;color:var(--muted);line-height:1.9;margin-bottom:16px"></div>
+          <div style="background:var(--gold-light);border-radius:6px;padding:10px 14px;font-size:13px;color:#7A5C00;margin-bottom:16px">
+            <strong>Note:</strong> This is a pre-order. Full payment details will be sent via WhatsApp after the batch closes.
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <button class="btn btn-outline btn-sm" onclick="goStep2()">← Back</button>
+            <button class="btn btn-red" id="submit-btn" onclick="submitOrder()">🎉 Place Pre-Order</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUCCESS -->
+      <div id="form-success" style="display:none">
+        <div class="order-section" style="text-align:center;padding:40px">
+          <div style="font-size:48px;margin-bottom:12px">🎉</div>
+          <h3 style="font-size:18px;margin-bottom:8px">Pre-Order Confirmed!</h3>
+          <p style="font-size:14px;color:var(--muted);margin-bottom:16px">Your order has been recorded. We'll contact you on WhatsApp once the batch closes.</p>
+          <div style="background:var(--bg);border-radius:8px;padding:12px 16px;display:inline-block;font-size:14px;font-weight:600;color:var(--red)" id="success-ref"></div>
+          <div style="margin-top:20px"><button class="btn btn-outline btn-sm" onclick="resetForm()">Place Another Order</button></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="cart-trigger" style="display:none;position:sticky;bottom:16px;text-align:center;padding-top:16px">
+      <button class="btn btn-red" style="padding:12px 28px;font-size:15px;border-radius:30px;box-shadow:0 4px 16px rgba(192,39,45,0.3)" onclick="openOrderForm()">
+        Pre-Order Selected <span class="cart-badge" id="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+
+  <div id="shop-closed" style="display:none">
+    <div class="closed-banner">
+      <div style="font-size:48px;margin-bottom:12px">🔒</div>
+      <h2>Pre-Order Closed</h2>
+      <p style="color:var(--muted);font-size:15px;margin-top:4px">This batch has ended. Stay tuned for the next batch announcement!</p>
+    </div>
+  </div>
+</div>
+
+<!-- ADMIN PAGE -->
+<div class="page" id="page-admin">
+  <div id="admin-login" style="max-width:360px;margin:40px auto">
+    <div class="admin-section">
+      <h3>Admin Login</h3>
+      <div class="field" style="margin-bottom:12px"><label>Password</label>
+        <input type="password" id="admin-pw" placeholder="Enter admin password" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <button class="btn btn-red" style="width:100%" onclick="adminLogin()">Sign In</button>
+    </div>
+  </div>
+
+  <div id="admin-panel" style="display:none">
+    <div class="admin-grid">
+      <div class="admin-card"><h3>Total Orders</h3><div class="big" id="stat-orders">–</div><div class="sub">This batch</div></div>
+      <div class="admin-card"><h3>Units Pre-Ordered</h3><div class="big" id="stat-units">–</div><div class="sub">Across all models</div></div>
+      <div class="admin-card"><h3>Verified Customers</h3><div class="big" id="stat-verified">–</div><div class="sub">Phone verified</div></div>
+      <div class="admin-card"><h3>Batch Status</h3><div class="big" id="stat-status" style="font-size:22px;margin-top:6px">–</div><div class="sub" id="stat-deadline-sub"></div></div>
+    </div>
+
+    <div class="admin-section">
+      <h3>Batch Settings</h3>
+      <div class="form-row">
+        <div class="field"><label>Batch Name</label><input type="text" id="admin-batch-name"></div>
+        <div class="field"><label>Description</label><input type="text" id="admin-batch-desc"></div>
+      </div>
+      <div class="form-row">
+        <div class="field"><label>Deadline Date & Time</label><input type="datetime-local" id="admin-deadline"></div>
+        <div class="field"><label>Batch Status</label>
+          <div style="display:flex;gap:8px;margin-top:4px">
+            <button class="toggle-btn" id="toggle-open" onclick="setBatchStatus('open')">🟢 Open</button>
+            <button class="toggle-btn" id="toggle-closed" onclick="setBatchStatus('closed')">🔴 Closed</button>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn-red btn-sm" onclick="saveBatchSettings()">Save Batch Settings</button>
+    </div>
+
+    <div class="admin-section">
+      <h3>Manage Products</h3>
+      <div class="products-list" id="admin-products-list"></div>
+      <details>
+        <summary style="font-size:14px;font-weight:600;color:var(--red);cursor:pointer;padding:8px 0">+ Add New Model</summary>
+        <div style="padding:16px 0">
+          <div class="form-row">
+            <div class="field"><label>Product Name</label><input type="text" id="prod-name" placeholder="Honda Civic Type R FD2"></div>
+            <div class="field"><label>Scale</label><input type="text" id="prod-scale" value="1:64"></div>
+          </div>
+          <div class="form-row">
+            <div class="field"><label>Retail Price (BND $)</label><input type="number" id="prod-price" placeholder="8.90" step="0.10"></div>
+            <div class="field"><label>Image URL</label><input type="text" id="prod-img" placeholder="https://..."></div>
+          </div>
+          <button class="btn btn-red btn-sm" onclick="addProduct()" style="margin-top:4px">Add Model</button>
+        </div>
+      </details>
+    </div>
+
+    <div class="admin-section">
+      <h3>Pre-Orders Received</h3>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>Models</th><th>Total</th><th>Verified</th><th>Time</th></tr></thead>
+          <tbody id="orders-table-body"></tbody>
+        </table>
+        <div id="no-orders" style="text-align:center;padding:24px;font-size:14px;color:var(--muted)">No orders yet.</div>
+      </div>
+      <div style="margin-top:12px;text-align:right">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
+      </div>
+    </div>
+
+    <div style="text-align:right;margin-top:8px"><button class="btn btn-outline btn-sm" onclick="adminLogout()">Sign Out</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ============================================================
+// CONFIG — change this to your backend URL when deployed
+// ============================================================
+var API = 'https://minigt-backend-production.up.railway.app';
+// When deployed to Railway: var API = 'https://your-app.up.railway.app';
+
+var state = {
+  batch: null,
+  products: [],
+  cart: {},
+  orders: [],
+  verifiedPhone: null,
+  customerName: '',
+  customerPhone: '',
+  customerAddr: '',
+  adminToken: null,
+  sentCode: null,
+  batchStatus: 'open'
+};
+
+// ============================================================
+// BOOT
+// ============================================================
+async function boot() {
+  try {
+    var r = await fetch(API + '/api/batch');
+    var d = await r.json();
+    state.batch = d.batch;
+    state.products = d.products;
+    renderShop();
+  } catch(e) {
+    // Fallback demo data if backend not running
+    state.batch = { title:'Batch #12 — May 2025', desc:'Select your models and place your pre-order before the deadline.', deadline: new Date(Date.now()+7*24*60*60*1000).toISOString(), status:'open' };
+    state.products = [
+      {id:'p1',name:'Nissan Skyline GT-R R34 V-Spec',scale:'1:64',price:8.90,image:''},
+      {id:'p2',name:'Toyota Supra A80 RZ',scale:'1:64',price:8.90,image:''},
+      {id:'p3',name:'Honda NSX Type R NA1',scale:'1:64',price:9.50,image:''},
+      {id:'p4',name:'Mazda RX-7 FD3S Spirit R',scale:'1:64',price:9.50,image:''},
+      {id:'p5',name:'Mitsubishi Lancer Evo IX',scale:'1:64',price:8.90,image:''},
+      {id:'p6',name:'Subaru Impreza WRX STI',scale:'1:64',price:8.90,image:''},
+    ];
+    renderShop();
+  }
+  document.getElementById('shop-loading').style.display = 'none';
+}
+
+// ============================================================
+// SHOP
+// ============================================================
+function renderShop() {
+  var open = state.batch && state.batch.status === 'open';
+  document.getElementById('shop-open').style.display = open ? '' : 'none';
+  document.getElementById('shop-closed').style.display = open ? 'none' : '';
+  if (!open) return;
+  document.getElementById('batch-title').textContent = state.batch.title;
+  document.getElementById('batch-desc').textContent = state.batch.desc;
+  document.getElementById('model-count').textContent = '(' + state.products.length + ' models)';
+  var emojis = ['🔵','🔴','🟡','🟠','🟢','⚪','🏎','🚗','🚙'];
+  var grid = document.getElementById('cars-grid');
+  grid.innerHTML = state.products.map(function(p, i) {
+    var sel = state.cart[p.id] > 0;
+    var imgHtml = p.image
+      ? '<img src="'+p.image+'" alt="'+p.name+'" onerror="this.parentNode.textContent=\''+(emojis[i%emojis.length])+'\'"/>'
+      : emojis[i % emojis.length];
+    return '<div class="car-card' + (sel ? ' selected' : '') + '" id="card-' + p.id + '">'
+      + '<div class="car-img">' + imgHtml + '</div>'
+      + '<div class="car-info">'
+      + '<div class="car-scale">MINI GT ' + p.scale + '</div>'
+      + '<div class="car-name">' + p.name + '</div>'
+      + '<div class="car-price">$' + Number(p.price).toFixed(2) + ' <span>BND</span></div>'
+      + '</div>'
+      + '<button class="car-select-btn" onclick="toggleCart(\'' + p.id + '\')">' + (sel ? '✓ Selected' : '+ Select') + '</button>'
+      + '</div>';
+  }).join('');
+  updateCartTrigger();
+}
+
+function toggleCart(id) {
+  if (state.cart[id]) { delete state.cart[id]; } else { state.cart[id] = 1; }
+  renderShop();
+}
+
+function updateCartTrigger() {
+  var count = Object.keys(state.cart).length;
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-trigger').style.display = count > 0 ? 'block' : 'none';
+}
+
+function openOrderForm() {
+  document.getElementById('order-form-wrap').style.display = '';
+  showFormStep(1);
+  renderOrderSummary();
+  setTimeout(function() { document.getElementById('order-form-wrap').scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+}
+
+function renderOrderSummary() {
+  var items = '', total = 0;
+  state.products.forEach(function(p) {
+    if (!state.cart[p.id]) return;
+    var qty = state.cart[p.id], sub = qty * p.price; total += sub;
+    items += '<div class="summary-item"><span class="name">' + p.name + '</span>'
+      + '<div style="display:flex;align-items:center;gap:12px">'
+      + '<div class="qty-ctrl"><button onclick="adjQty(\'' + p.id + '\',-1)">−</button><span>' + qty + '</span><button onclick="adjQty(\'' + p.id + '\',1)">+</button></div>'
+      + '<span class="price" style="font-weight:600;min-width:56px;text-align:right">$' + sub.toFixed(2) + '</span></div></div>';
+  });
+  document.getElementById('order-summary-items').innerHTML = items;
+  document.getElementById('order-total').textContent = 'BND $' + total.toFixed(2);
+}
+
+function adjQty(id, d) {
+  state.cart[id] = (state.cart[id] || 0) + d;
+  if (state.cart[id] <= 0) delete state.cart[id];
+  renderOrderSummary(); updateCartTrigger();
+  if (Object.keys(state.cart).length === 0) document.getElementById('order-form-wrap').style.display = 'none';
+}
+
+function showFormStep(n) {
+  ['form-step1','form-step2','form-step3','form-success'].forEach(function(id) { document.getElementById(id).style.display = 'none'; });
+  if (n === 'success') { document.getElementById('form-success').style.display = ''; }
+  else { document.getElementById('form-step' + n).style.display = ''; }
+  [1,2,3].forEach(function(i) {
+    var el = document.getElementById('step' + i);
+    el.className = 'step' + (i === n ? ' active' : (i < n ? ' done' : ''));
+    el.querySelector('.step-num').textContent = i < n ? '✓' : i;
+  });
+}
+
+async function goStep2() {
+  var name = document.getElementById('cust-name').value.trim();
+  var ph = document.getElementById('phone-num').value.trim();
+  if (!name) { toast('Please enter your name'); return; }
+  if (!ph || ph.length < 6) { toast('Please enter a valid phone number'); return; }
+  state.customerName = name;
+  state.customerPhone = document.getElementById('phone-code').value + ph;
+  state.customerAddr = document.getElementById('cust-addr').value.trim();
+  document.getElementById('phone-display').textContent = state.customerPhone;
+  document.getElementById('phone-confirm-display').value = state.customerPhone;
+  document.getElementById('sms-sent-msg').className = 'sms-status';
+  document.getElementById('verify-status').className = 'sms-status';
+  document.getElementById('code-input-wrap').style.display = 'none';
+  document.getElementById('proceed-confirm-btn').style.display = 'none';
+  showFormStep(2);
+}
+
+async function sendVerificationCode() {
+  var btn = document.getElementById('send-code-btn');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    var r = await fetch(API + '/api/send-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: state.customerPhone })
+    });
+    var d = await r.json();
+    if (d.success) {
+      var m = document.getElementById('sms-sent-msg');
+      m.className = 'sms-status sent';
+      m.textContent = '✓ Code sent to ' + state.customerPhone;
+      document.getElementById('code-input-wrap').style.display = '';
+      btn.textContent = 'Resend';
+    } else {
+      toast('Failed to send SMS: ' + (d.error || 'Unknown error'));
+      btn.textContent = 'Retry';
+    }
+  } catch(e) {
+    // Demo fallback
+    state.sentCode = '123456';
+    var m = document.getElementById('sms-sent-msg');
+    m.className = 'sms-status sent';
+    m.textContent = '✓ Demo mode — use code: 123456';
+    document.getElementById('code-input-wrap').style.display = '';
+    btn.textContent = 'Resend';
+  }
+  btn.disabled = false;
+}
+
+async function verifyCode() {
+  var entered = document.getElementById('verify-code').value.trim();
+  var s = document.getElementById('verify-status');
+  try {
+    var r = await fetch(API + '/api/verify-code', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: state.customerPhone, code: entered })
+    });
+    var d = await r.json();
+    if (d.verified) {
+      s.className = 'sms-status verified'; s.textContent = '✓ Phone verified successfully!';
+      state.verifiedPhone = state.customerPhone;
+      document.getElementById('proceed-confirm-btn').style.display = '';
+    } else {
+      s.className = 'sms-status error'; s.textContent = '✗ Incorrect code. Try again.';
+    }
+  } catch(e) {
+    // Demo fallback
+    if (entered === '123456' || entered === state.sentCode) {
+      s.className = 'sms-status verified'; s.textContent = '✓ Phone verified!';
+      state.verifiedPhone = state.customerPhone;
+      document.getElementById('proceed-confirm-btn').style.display = '';
+    } else {
+      s.className = 'sms-status error'; s.textContent = '✗ Incorrect code.';
+    }
+  }
+}
+
+function goStep1() { showFormStep(1); }
+
+function goStep3() {
+  if (!state.verifiedPhone) { toast('Please verify your phone first'); return; }
+  var items = '', total = 0;
+  state.products.forEach(function(p) {
+    if (!state.cart[p.id]) return;
+    var sub = state.cart[p.id] * p.price; total += sub;
+    items += '<div>• <strong>' + p.name + '</strong> × ' + state.cart[p.id] + ' = BND $' + sub.toFixed(2) + '</div>';
+  });
+  document.getElementById('final-summary').innerHTML =
+    '<strong>Name:</strong> ' + state.customerName + '<br>'
+    + '<strong>Phone:</strong> ' + state.customerPhone + ' ✓ Verified<br>'
+    + (state.customerAddr ? '<strong>Address:</strong> ' + state.customerAddr + '<br>' : '')
+    + '<br>' + items
+    + '<br><strong>Total:</strong> BND $' + total.toFixed(2);
+  showFormStep(3);
+}
+
+async function submitOrder() {
+  var btn = document.getElementById('submit-btn');
+  btn.disabled = true; btn.textContent = 'Submitting...';
+  var items = [];
+  state.products.forEach(function(p) {
+    if (state.cart[p.id]) items.push({ productId: p.id, name: p.name, qty: state.cart[p.id], price: p.price });
+  });
+  try {
+    var r = await fetch(API + '/api/orders', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: state.customerName, phone: state.verifiedPhone, address: state.customerAddr, items: items })
+    });
+    var d = await r.json();
+    if (d.ref) {
+      document.getElementById('success-ref').textContent = 'Order Reference: ' + d.ref;
+      showFormStep('success');
+      state.cart = {}; updateCartTrigger();
+    } else { toast('Error submitting order. Please try again.'); }
+  } catch(e) {
+    var ref = 'MGT-' + Date.now().toString().slice(-6);
+    document.getElementById('success-ref').textContent = 'Order Reference: ' + ref + ' (Demo)';
+    showFormStep('success');
+    state.cart = {}; updateCartTrigger();
+  }
+  btn.disabled = false; btn.textContent = '🎉 Place Pre-Order';
+}
+
+function resetForm() {
+  document.getElementById('order-form-wrap').style.display = 'none';
+  ['cust-name','phone-num','cust-addr','verify-code'].forEach(function(id) { document.getElementById(id).value = ''; });
+  state.verifiedPhone = null; state.sentCode = null;
+  showFormStep(1); renderShop();
+}
+
+// Countdown
+function updateCountdown() {
+  if (!state.batch) return;
+  var dl = new Date(state.batch.deadline), now = new Date(), diff = dl - now;
+  if (diff <= 0) { document.getElementById('countdown').textContent = 'CLOSED'; return; }
+  var d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+  document.getElementById('countdown').textContent = (d > 0 ? d + 'd ' : '') + pad(h) + ':' + pad(m) + ':' + pad(s);
+  var opts = { year:'numeric', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' };
+  document.getElementById('deadline-text').textContent = dl.toLocaleDateString('en-GB', opts);
+}
+function pad(n) { return n < 10 ? '0' + n : n; }
+setInterval(updateCountdown, 1000);
+
+// ============================================================
+// ADMIN
+// ============================================================
+async function adminLogin() {
+  var pw = document.getElementById('admin-pw').value;
+  try {
+    var r = await fetch(API + '/api/admin/login', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ password: pw }) });
+    var d = await r.json();
+    if (d.token) {
+      state.adminToken = d.token;
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-panel').style.display = '';
+      loadAdminData();
+    } else { toast('Incorrect password'); }
+  } catch(e) {
+    if (pw === 'admin123') {
+      state.adminToken = 'demo';
+      document.getElementById('admin-login').style.display = 'none';
+      document.getElementById('admin-panel').style.display = '';
+      loadAdminData();
+    } else { toast('Incorrect password'); }
+  }
+}
+
+function adminLogout() {
+  state.adminToken = null;
+  document.getElementById('admin-login').style.display = '';
+  document.getElementById('admin-panel').style.display = 'none';
+  document.getElementById('admin-pw').value = '';
+}
+
+async function loadAdminData() {
+  try {
+    var headers = { 'Authorization': 'Bearer ' + state.adminToken };
+    var [batchRes, ordersRes] = await Promise.all([
+      fetch(API + '/api/batch'),
+      fetch(API + '/api/admin/orders', { headers })
+    ]);
+    var batchData = await batchRes.json();
+    var ordersData = await ordersRes.json();
+    state.batch = batchData.batch;
+    state.products = batchData.products;
+    state.orders = ordersData.orders || [];
+  } catch(e) { state.orders = []; }
+  refreshAdminUI();
+}
+
+function refreshAdminUI() {
+  var b = state.batch || {};
+  document.getElementById('stat-orders').textContent = state.orders.length;
+  var units = state.orders.reduce(function(a,o) { return a + (o.items||[]).reduce(function(b,i) { return b+i.qty; }, 0); }, 0);
+  document.getElementById('stat-units').textContent = units;
+  document.getElementById('stat-verified').textContent = state.orders.filter(function(o){return o.verified;}).length;
+  document.getElementById('stat-status').textContent = b.status === 'open' ? '🟢 Open' : '🔴 Closed';
+  document.getElementById('stat-deadline-sub').textContent = b.deadline ? 'Deadline: ' + new Date(b.deadline).toLocaleDateString('en-GB') : '';
+  document.getElementById('admin-batch-name').value = b.title || '';
+  document.getElementById('admin-batch-desc').value = b.desc || '';
+  document.getElementById('admin-deadline').value = b.deadline ? b.deadline.slice(0,16) : '';
+  document.getElementById('toggle-open').className = 'toggle-btn' + (b.status === 'open' ? ' active' : '');
+  document.getElementById('toggle-closed').className = 'toggle-btn' + (b.status === 'closed' ? ' active' : '');
+  renderAdminProducts();
+  renderOrdersTable();
+}
+
+function renderAdminProducts() {
+  var emojis = ['🔵','🔴','🟡','🟠','🟢','⚪','🏎','🚗','🚙'];
+  document.getElementById('admin-products-list').innerHTML = state.products.map(function(p,i) {
+    var imgHtml = p.image ? '<img src="'+p.image+'" style="width:100%;height:100%;object-fit:cover" onerror="this.parentNode.textContent=\'🚗\'"/>' : emojis[i%emojis.length];
+    return '<div class="product-row">'
+      + '<div class="prod-img">' + imgHtml + '</div>'
+      + '<div class="prod-info"><div class="prod-name">' + p.name + '</div><div class="prod-meta">' + p.scale + ' — BND $' + Number(p.price).toFixed(2) + '</div></div>'
+      + '<div class="prod-actions"><button class="btn btn-outline btn-sm" onclick="removeProduct(\'' + p.id + '\')">Remove</button></div>'
+      + '</div>';
+  }).join('');
+}
+
+function renderOrdersTable() {
+  var tbody = document.getElementById('orders-table-body');
+  document.getElementById('no-orders').style.display = state.orders.length === 0 ? '' : 'none';
+  tbody.innerHTML = state.orders.map(function(o) {
+    var mods = (o.items||[]).map(function(i) { return i.name + ' ×' + i.qty; }).join(', ');
+    var total = (o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
+    return '<tr><td style="font-weight:600;color:var(--red)">' + o.ref + '</td><td>' + o.name + '</td><td>' + o.phone + '</td>'
+      + '<td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + mods + '">' + mods + '</td>'
+      + '<td style="font-weight:600">$' + total.toFixed(2) + '</td>'
+      + '<td><span class="badge ' + (o.verified ? 'badge-green' : 'badge-gray') + '">' + (o.verified ? '✓ Yes' : 'No') + '</span></td>'
+      + '<td style="color:var(--muted);font-size:12px">' + new Date(o.createdAt||Date.now()).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'short'}) + '</td></tr>';
+  }).join('');
+}
+
+async function saveBatchSettings() {
+  var payload = {
+    title: document.getElementById('admin-batch-name').value,
+    desc: document.getElementById('admin-batch-desc').value,
+    deadline: document.getElementById('admin-deadline').value,
+    status: state.batch.status
+  };
+  try {
+    await fetch(API + '/api/admin/batch', { method:'PUT', headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.adminToken}, body: JSON.stringify(payload) });
+  } catch(e) {}
+  state.batch = Object.assign(state.batch, payload);
+  renderShop(); refreshAdminUI(); toast('Batch settings saved!');
+}
+
+function setBatchStatus(s) {
+  state.batch.status = s;
+  document.getElementById('toggle-open').className = 'toggle-btn' + (s === 'open' ? ' active' : '');
+  document.getElementById('toggle-closed').className = 'toggle-btn' + (s === 'closed' ? ' active' : '');
+}
+
+async function addProduct() {
+  var name = document.getElementById('prod-name').value.trim();
+  var price = parseFloat(document.getElementById('prod-price').value);
+  var scale = document.getElementById('prod-scale').value.trim() || '1:64';
+  var image = document.getElementById('prod-img').value.trim();
+  if (!name || isNaN(price)) { toast('Please fill in name and price'); return; }
+  var prod = { id: 'p' + Date.now(), name, scale, price, image };
+  try {
+    var r = await fetch(API + '/api/admin/products', { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+state.adminToken}, body: JSON.stringify(prod) });
+    var d = await r.json();
+    if (d.id) prod.id = d.id;
+  } catch(e) {}
+  state.products.push(prod);
+  ['prod-name','prod-price','prod-img'].forEach(function(id){document.getElementById(id).value='';});
+  renderAdminProducts(); renderShop(); toast('Model added!');
+}
+
+async function removeProduct(id) {
+  try {
+    await fetch(API + '/api/admin/products/' + id, { method:'DELETE', headers:{'Authorization':'Bearer '+state.adminToken} });
+  } catch(e) {}
+  state.products = state.products.filter(function(p){return p.id!==id;});
+  delete state.cart[id];
+  renderAdminProducts(); renderShop(); toast('Model removed');
+}
+
+function exportCSV() {
+  var rows = [['Ref','Name','Phone','Address','Models','Total BND','Verified','Date']];
+  state.orders.forEach(function(o) {
+    var mods = (o.items||[]).map(function(i){return i.name+' x'+i.qty;}).join('; ');
+    var total = (o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
+    rows.push([o.ref, o.name, o.phone, o.address||'', mods, total.toFixed(2), o.verified?'Yes':'No', new Date(o.createdAt||Date.now()).toLocaleString('en-GB')]);
+  });
+  var csv = rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
+  var a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'minigt-orders-' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  toast('CSV exported!');
+}
+
+function showPage(p, el) {
+  document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+  document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});
+  document.getElementById('page-'+p).classList.add('active');
+  if (el) el.classList.add('active');
+  if (p === 'admin' && !state.adminToken) {
+    document.getElementById('admin-login').style.display = '';
+    document.getElementById('admin-panel').style.display = 'none';
+  }
+}
+
+function toast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast show';
+  clearTimeout(t._t); t._t = setTimeout(function(){t.className='toast';}, 2800);
+}
+
+boot();
+setInterval(updateCountdown, 1000);
+</script>
+</body>
+</html>
