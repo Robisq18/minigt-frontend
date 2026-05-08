@@ -6,6 +6,34 @@
   <title>MINI GT Brunei — Pre-Order</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Firebase -->
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
+    import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyCcpBE8U_SxKg8mRSG7X3VN_u-YJFVms1Q",
+      authDomain: "minigt-brunei.firebaseapp.com",
+      projectId: "minigt-brunei",
+      storageBucket: "minigt-brunei.firebasestorage.app",
+      messagingSenderId: "548607657346",
+      appId: "1:548607657346:web:e1d061ca28d062b3313b9b"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    auth.languageCode = 'en';
+
+    // Expose to global scope for use in regular scripts
+    window._fbAuth = auth;
+    window._fbRecaptchaVerifier = null;
+    window._fbConfirmationResult = null;
+    window.RecaptchaVerifier = RecaptchaVerifier;
+    window.signInWithPhoneNumber = signInWithPhoneNumber;
+    window._firebaseReady = true;
+    document.dispatchEvent(new Event('firebaseReady'));
+  </script>
+
   <style>
     *{box-sizing:border-box;margin:0;padding:0}
     :root{
@@ -390,6 +418,7 @@
   </div>
 </div>
 
+<div id="recaptcha-container"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -621,6 +650,30 @@ function switchAuthTab(tab) {
   document.getElementById('auth-register').style.display = tab==='register'?'':'none';
 }
 
+// ── FIREBASE HELPERS ─────────────────────────────────────
+function setupRecaptcha(buttonId) {
+  if (window._fbRecaptchaVerifier) {
+    try { window._fbRecaptchaVerifier.clear(); } catch(e) {}
+  }
+  window._fbRecaptchaVerifier = new window.RecaptchaVerifier(window._fbAuth, 'recaptcha-container', {
+    size: 'invisible',
+    callback: function() {}
+  });
+}
+
+async function fbSendCode(phone) {
+  setupRecaptcha();
+  const result = await window.signInWithPhoneNumber(window._fbAuth, phone, window._fbRecaptchaVerifier);
+  window._fbConfirmationResult = result;
+}
+
+async function fbVerifyCode(code) {
+  if (!window._fbConfirmationResult) throw new Error('No confirmation result');
+  const result = await window._fbConfirmationResult.confirm(code);
+  const idToken = await result.user.getIdToken();
+  return { phone: result.user.phoneNumber, idToken };
+}
+
 // LOGIN
 async function loginSendCode() {
   var ph = document.getElementById('login-phone').value.trim();
@@ -628,21 +681,22 @@ async function loginSendCode() {
   S.loginPhone = document.getElementById('login-code').value + ph;
   var btn = document.getElementById('login-send-btn');
   btn.disabled=true; btn.textContent='Sending...';
+  showMsg('login-msg1','','');
   try {
-    var r = await fetch(API+'/api/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:S.loginPhone,purpose:'login'})});
-    var d = await r.json();
-    if(d.success) {
-      document.getElementById('login-phone-display').textContent = S.loginPhone;
-      document.getElementById('login-step1').style.display='none';
-      document.getElementById('login-step2').style.display='';
-      if(d.demo) showMsg('login-msg2','Demo mode — use code: 123456','info');
-    } else { showMsg('login-msg1', d.error||'Failed to send code','error'); }
-  } catch(e) {
-    S.loginPhone = S.loginPhone;
+    await fbSendCode(S.loginPhone);
     document.getElementById('login-phone-display').textContent = S.loginPhone;
     document.getElementById('login-step1').style.display='none';
     document.getElementById('login-step2').style.display='';
-    showMsg('login-msg2','Demo mode — use code: 123456','info');
+    showMsg('login-msg2','Code sent! Check your phone.','success');
+  } catch(e) {
+    console.error('Firebase send error:', e);
+    var msg = e.code === 'auth/invalid-phone-number' ? 'Invalid phone number format.'
+      : e.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.'
+      : e.code === 'auth/operation-not-allowed' ? 'Phone auth not enabled in Firebase.'
+      : 'Failed to send code: ' + (e.message || e.code);
+    showMsg('login-msg1', msg, 'error');
+    try { window._fbRecaptchaVerifier.clear(); } catch(x) {}
+    window._fbRecaptchaVerifier = null;
   }
   btn.disabled=false; btn.textContent='Send Code via SMS';
 }
@@ -650,21 +704,32 @@ async function loginSendCode() {
 async function loginVerify() {
   var code = document.getElementById('login-verify-code').value.trim();
   if(!code) { showMsg('login-msg2','Enter the code','error'); return; }
+  var btn = event.target; btn.disabled=true; btn.textContent='Verifying...';
   try {
-    var r = await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:S.loginPhone,code})});
+    var fb = await fbVerifyCode(code);
+    // Firebase verified — now login/register with backend using idToken
+    var r = await fetch(API+'/api/auth/firebase-login', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ idToken: fb.idToken, phone: fb.phone })
+    });
     var d = await r.json();
     if(d.success) { onAuthSuccess(d.token, d.customer); }
-    else { showMsg('login-msg2', d.error||'Incorrect code','error'); }
+    else { showMsg('login-msg2', d.error||'Account not found. Please register first.','error'); }
   } catch(e) {
-    if(code==='123456') { onAuthSuccess('demo-token-'+Date.now(), {name:'Demo User',phone:S.loginPhone,address:''}); }
-    else { showMsg('login-msg2','Incorrect code','error'); }
+    var msg = e.code === 'auth/invalid-verification-code' ? 'Incorrect code. Try again.'
+      : e.code === 'auth/code-expired' ? 'Code expired. Request a new one.'
+      : 'Verification failed: ' + (e.message || e.code);
+    showMsg('login-msg2', msg, 'error');
   }
+  btn.disabled=false; btn.textContent='Verify';
 }
 
 function loginBack() {
   document.getElementById('login-step1').style.display='';
   document.getElementById('login-step2').style.display='none';
   document.getElementById('login-verify-code').value='';
+  window._fbConfirmationResult = null;
 }
 
 // REGISTER
@@ -672,22 +737,23 @@ async function regSendCode() {
   var name = document.getElementById('reg-name').value.trim();
   var ph = document.getElementById('reg-phone').value.trim();
   if(!name) { showMsg('reg-msg1','Please enter your name','error'); return; }
-  if(!ph) { showMsg('reg-msg1','Please enter your phone','error'); return; }
+  if(!ph) { showMsg('reg-msg1','Please enter your phone number','error'); return; }
   S.regPhone = document.getElementById('reg-code').value + ph;
+  showMsg('reg-msg1','','');
   try {
-    var r = await fetch(API+'/api/auth/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:S.regPhone,purpose:'register'})});
-    var d = await r.json();
-    if(d.success) {
-      document.getElementById('reg-phone-display').textContent = S.regPhone;
-      document.getElementById('reg-step1').style.display='none';
-      document.getElementById('reg-step2').style.display='';
-      if(d.demo) showMsg('reg-msg2','Demo mode — use code: 123456','info');
-    } else { showMsg('reg-msg1',d.error||'Failed to send','error'); }
-  } catch(e) {
+    await fbSendCode(S.regPhone);
     document.getElementById('reg-phone-display').textContent = S.regPhone;
     document.getElementById('reg-step1').style.display='none';
     document.getElementById('reg-step2').style.display='';
-    showMsg('reg-msg2','Demo mode — use code: 123456','info');
+    showMsg('reg-msg2','Code sent! Check your phone.','success');
+  } catch(e) {
+    console.error('Firebase send error:', e);
+    var msg = e.code === 'auth/invalid-phone-number' ? 'Invalid phone number format.'
+      : e.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.'
+      : 'Failed to send code: ' + (e.message || e.code);
+    showMsg('reg-msg1', msg, 'error');
+    try { window._fbRecaptchaVerifier.clear(); } catch(x) {}
+    window._fbRecaptchaVerifier = null;
   }
 }
 
@@ -696,21 +762,32 @@ async function regVerify() {
   var name = document.getElementById('reg-name').value.trim();
   var address = document.getElementById('reg-address').value.trim();
   if(!code) { showMsg('reg-msg2','Enter the code','error'); return; }
+  var btn = event.target; btn.disabled=true; btn.textContent='Creating account...';
   try {
-    var r = await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:S.regPhone,code,name,address})});
+    var fb = await fbVerifyCode(code);
+    // Firebase verified — register with backend
+    var r = await fetch(API+'/api/auth/firebase-register', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ idToken: fb.idToken, phone: fb.phone, name, address })
+    });
     var d = await r.json();
     if(d.success) { onAuthSuccess(d.token, d.customer); }
-    else { showMsg('reg-msg2',d.error||'Incorrect code','error'); }
+    else { showMsg('reg-msg2', d.error||'Registration failed','error'); }
   } catch(e) {
-    if(code==='123456') { onAuthSuccess('demo-token-'+Date.now(), {name,phone:S.regPhone,address}); }
-    else { showMsg('reg-msg2','Incorrect code','error'); }
+    var msg = e.code === 'auth/invalid-verification-code' ? 'Incorrect code. Try again.'
+      : e.code === 'auth/code-expired' ? 'Code expired. Request a new one.'
+      : 'Verification failed: ' + (e.message || e.code);
+    showMsg('reg-msg2', msg, 'error');
   }
+  btn.disabled=false; btn.textContent='Create Account';
 }
 
 function regBack() {
   document.getElementById('reg-step1').style.display='';
   document.getElementById('reg-step2').style.display='none';
   document.getElementById('reg-verify-code').value='';
+  window._fbConfirmationResult = null;
 }
 
 function onAuthSuccess(token, customer) {
