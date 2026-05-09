@@ -1035,6 +1035,7 @@ function renderBatchDetail(batch,products){
   var batchesTab = document.getElementById('atab-batches');
   if(batchesTab) batchesTab.style.display='';
 
+  console.log('batch-detail el:', g('batch-detail'), 'batch:', batch && batch.id);
   var detailEl=g('batch-detail');
   if(!detailEl){console.error('Missing: batch-detail');return;}
   detailEl.style.display='';
@@ -1061,6 +1062,7 @@ function renderBatchDetail(batch,products){
     ?'<button class="btn btn-outline btn-sm" onclick="openEditBatchModal(\''+batch.id+'\')">✏️ Edit Batch</button>':'';
 
   var list=g('batch-products-list');
+  console.log('batch-products-list el:', list, 'products:', products && products.length);
   if(!list){console.error('Missing: batch-products-list');return;}
 
   if(!products||!products.length){
