@@ -97,7 +97,7 @@
     .phone-row select{width:110px;flex-shrink:0}
     .phone-row input{flex:1}
     .code-row{display:flex;gap:8px}
-    .code-row input{flex:1;letter-spacing:6px;font-size:20px;font-weight:700;text-align:center}
+    .code-row input{flex:1;letter-spacing:6px;font-size:20px;font-weight:700;text-align:center;color:var(--text)}.code-row input::placeholder{color:#D0CFCD;font-weight:400;letter-spacing:4px}
     /* BUTTONS */
     .btn{border:none;padding:10px 18px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
     .btn-red{background:var(--red);color:#fff}
@@ -310,7 +310,7 @@
         <div class="field"><label>Phone Number</label>
           <div class="phone-row">
             <select id="login-cc"><option value="+673">🇧🇳 +673</option><option value="+60">🇲🇾 +60</option><option value="+65">🇸🇬 +65</option><option value="+62">🇮🇩 +62</option></select>
-            <input type="tel" id="login-phone" placeholder="7XXXXXXX">
+            <input type="tel" id="login-phone" placeholder="XXXXXXXX">
           </div>
         </div>
         <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
@@ -329,7 +329,7 @@
           <div class="field"><label>Mobile Phone</label>
             <div class="phone-row">
               <select id="reg-cc"><option value="+673">🇧🇳 +673</option><option value="+60">🇲🇾 +60</option><option value="+65">🇸🇬 +65</option><option value="+62">🇮🇩 +62</option></select>
-              <input type="tel" id="reg-phone" placeholder="7XXXXXXX">
+              <input type="tel" id="reg-phone" placeholder="XXXXXXXX">
             </div>
           </div>
           <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="At least 6 characters"></div>
@@ -343,7 +343,7 @@
           <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Enter the 6-digit code sent to <strong id="reg-phone-display"></strong></p>
           <div class="field"><label>Verification Code</label>
             <div class="code-row">
-              <input type="text" id="reg-code" placeholder="123456" maxlength="6" onkeydown="if(event.key==='Enter')regStep2()">
+              <input type="text" id="reg-code" placeholder="······" maxlength="6" onkeydown="if(event.key==='Enter')regStep2()">
               <button class="btn btn-red" onclick="regStep2()">Verify & Create</button>
             </div>
           </div>
