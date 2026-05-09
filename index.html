@@ -565,6 +565,11 @@
 </div>
 
 <input type="file" id="img-upload-input" accept="image/*" onchange="handleImageUpload(this)">
+<!-- IMAGE LIGHTBOX -->
+<div id="lightbox" onclick="closeLightbox()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:500;align-items:center;justify-content:center;cursor:zoom-out">
+  <img id="lightbox-img" src="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5)">
+  <div style="position:absolute;top:20px;right:24px;color:#fff;font-size:28px;cursor:pointer;line-height:1" onclick="closeLightbox()">✕</div>
+</div>
 <div id="recaptcha-container"></div>
 <div class="toast" id="toast"></div>
 
@@ -612,8 +617,9 @@ async function loadBatches() {
   populateBatchDropdown();
 
   // Default: show active batch, or most recent if all closed
-  var activeBatch = S.allBatches.find(function(b){ return b.status === 'active'; });
-  var defaultBatch = activeBatch || S.allBatches[0];
+  // Show most recent active batch by default, or most recent overall
+  var activeBatches = S.allBatches.filter(function(b){ return b.status === 'active'; });
+  var defaultBatch = activeBatches[0] || S.allBatches[0];
   await selectBatch(defaultBatch.id);
 }
 
@@ -621,10 +627,15 @@ function populateBatchDropdown() {
   var wrap = document.getElementById('batch-selector-wrap');
   var sel = document.getElementById('batch-dropdown');
   if (S.allBatches.length >= 5) {
-    sel.innerHTML = S.allBatches.map(function(b){
-      var label = b.ref + ' — ' + b.title + (b.status === 'closed' ? ' (Closed)' : '');
-      return '<option value="'+b.id+'">'+label+'</option>';
-    }).join('');
+    // Sort: active first, then closed by date
+  var sorted = S.allBatches.slice().sort(function(a,b){
+    if(a.status===b.status) return new Date(b.createdAt)-new Date(a.createdAt);
+    return a.status==='active'?-1:1;
+  });
+  sel.innerHTML = sorted.map(function(b){
+    var label = b.ref + ' — ' + b.title + (b.status === 'closed' ? ' (Closed)' : ' (Active)');
+    return '<option value="'+b.id+'">'+label+'</option>';
+  }).join('');
     wrap.style.display = '';
   } else {
     wrap.style.display = 'none';
@@ -679,7 +690,7 @@ function renderProducts() {
   document.getElementById('cars-grid').innerHTML = S.currentProducts.map(function(p,i){
     var qty = S.cart[p.id]||0, inCart = qty>0;
     var imgHtml = p.image
-      ? '<img src="'+API+p.image+'" alt="'+p.name+'" onerror="this.parentNode.innerHTML=\''+emojis[i%emojis.length]+'\'">'
+      ? '<img src="'+API+p.image+'" alt="'+p.name+'" style="cursor:zoom-in" onclick="openLightbox(\''+API+p.image+'\',\''+p.name+'\',event)" onerror="this.parentNode.innerHTML=\''+emojis[i%emojis.length]+'\'">'
       : emojis[i%emojis.length];
 
     var bottomHtml = isActive
@@ -1003,6 +1014,14 @@ function renderAdminBatches(){
 }
 
 async function selectAdminBatch(batchId){
+  // Toggle - click same batch again to collapse
+  if(S.selectedAdminBatchId===batchId){
+    S.selectedAdminBatchId=null;
+    renderAdminBatches();
+    var detailEl=document.getElementById('batch-detail');
+    if(detailEl) detailEl.style.display='none';
+    return;
+  }
   S.selectedAdminBatchId=batchId;
   renderAdminBatches();
   try{
@@ -1336,6 +1355,23 @@ function showPage(p,activeEl){
   if(p==='history'){if(S.customer)loadHistory();else showPage('auth',null);}
   if(p==='account'){if(S.customer)loadAccount();else showPage('auth',null);}
 }
+
+function openLightbox(src, alt, event){
+  if(event) event.stopPropagation();
+  var lb=document.getElementById('lightbox');
+  var img=document.getElementById('lightbox-img');
+  if(!lb||!img) return;
+  img.src=src; img.alt=alt||'';
+  lb.style.display='flex';
+  document.body.style.overflow='hidden';
+}
+function closeLightbox(){
+  var lb=document.getElementById('lightbox');
+  if(lb) lb.style.display='none';
+  document.body.style.overflow='';
+}
+// Close lightbox on Escape key
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2800);}
 
