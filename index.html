@@ -989,6 +989,7 @@ function renderAdminPanel(){
 
 function renderAdminBatches(){
   var list=document.getElementById('admin-batch-list');
+  if(!list) return;
   if(!S.adminBatches.length){list.innerHTML='<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">No batches yet. Create your first batch!</div>';return;}
   list.innerHTML=S.adminBatches.map(function(b){
     var isSelected=S.selectedAdminBatchId===b.id;
@@ -1028,25 +1029,45 @@ async function selectAdminBatch(batchId){
 }
 
 function renderBatchDetail(batch,products){
-  document.getElementById('batch-detail').style.display='';
-  document.getElementById('batch-detail-title').textContent=batch.ref+' — '+batch.title;
-  document.getElementById('batch-detail-status').innerHTML=batch.status==='active'
+  function g(id){return document.getElementById(id);}
+
+  // Make sure batches tab content is visible
+  var batchesTab = document.getElementById('atab-batches');
+  if(batchesTab) batchesTab.style.display='';
+
+  var detailEl=g('batch-detail');
+  if(!detailEl){console.error('Missing: batch-detail');return;}
+  detailEl.style.display='';
+
+  var titleEl=g('batch-detail-title');
+  if(titleEl) titleEl.textContent=batch.ref+' — '+batch.title;
+
+  var statusEl=g('batch-detail-status');
+  if(statusEl) statusEl.innerHTML=batch.status==='active'
     ?'<span class="status-pill status-active" style="margin-left:8px">Active</span>'
     :'<span class="status-pill status-closed" style="margin-left:8px">Closed</span>';
-  document.getElementById('batch-detail-info').innerHTML=
+
+  var infoEl=g('batch-detail-info');
+  if(infoEl) infoEl.innerHTML=
     (batch.desc?'<div>'+batch.desc+'</div>':'')
     +(batch.deadline?'<div>Deadline: <strong>'+new Date(batch.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</strong></div>':'')
     +'<div>Orders: <strong>'+((S.adminOrders||[]).filter(function(o){return o.batchId===batch.id;})).length+'</strong></div>';
 
   var isActive=batch.status==='active';
-  document.getElementById('add-product-area').style.display=isActive?'':'none';
-  document.getElementById('close-batch-btn').style.display=isActive?'':'none';
-
-  document.getElementById('batch-edit-area').innerHTML=isActive
+  var addArea=g('add-product-area'); if(addArea) addArea.style.display=isActive?'':'none';
+  var closeBtn=g('close-batch-btn'); if(closeBtn) closeBtn.style.display=isActive?'':'none';
+  var editArea=g('batch-edit-area');
+  if(editArea) editArea.innerHTML=isActive
     ?'<button class="btn btn-outline btn-sm" onclick="openEditBatchModal(\''+batch.id+'\')">✏️ Edit Batch</button>':'';
 
-  var list=document.getElementById('batch-products-list');
-  if(!products.length){list.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No products yet. Add your first product below.</div>';return;}
+  var list=g('batch-products-list');
+  if(!list){console.error('Missing: batch-products-list');return;}
+
+  if(!products||!products.length){
+    list.innerHTML='<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px">No products yet. Add your first product below.</div>';
+    return;
+  }
+
   list.innerHTML=products.map(function(p){
     var imgHtml=p.image
       ?'<img src="'+API+p.image+'" style="width:100%;height:100%;object-fit:cover">'
@@ -1062,7 +1083,6 @@ function renderBatchDetail(batch,products){
       +'</div>';
   }).join('');
 }
-
 // Image upload
 function triggerImageUpload(productId){
   var batch=S.adminBatches.find(function(b){return b.id===S.selectedAdminBatchId;});
@@ -1204,6 +1224,7 @@ function filterOrders(){
   var batchId=document.getElementById('order-batch-filter').value;
   var orders=batchId?S.adminOrders.filter(function(o){return o.batchId===batchId;}):S.adminOrders;
   var tbody=document.getElementById('a-orders-table');
+  if(!tbody) return;
   document.getElementById('a-no-orders').style.display=orders.length===0?'':'none';
   tbody.innerHTML=orders.map(function(o){
     var mods=(o.items||[]).map(function(i){return i.name+'×'+i.qty;}).join(', ');
@@ -1218,6 +1239,7 @@ function filterOrders(){
 
 function renderAdminCustomers(){
   var tbody=document.getElementById('a-customers-table');
+  if(!tbody) return;
   document.getElementById('a-no-customers').style.display=S.adminCustomers.length===0?'':'none';
   tbody.innerHTML=S.adminCustomers.map(function(c){
     return '<tr><td style="font-weight:600">'+c.firstName+' '+c.lastName+'</td><td>'+c.phone+'</td>'
