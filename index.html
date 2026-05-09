@@ -443,10 +443,13 @@
               <summary style="font-size:13px;font-weight:700;color:var(--red);cursor:pointer;padding:6px 0">+ Add Product to This Batch</summary>
               <div style="padding:14px 0">
                 <div class="two-col">
+                  <div class="field"><label>Model Number</label><input type="text" id="np-model" placeholder="e.g. MGT00123"></div>
                   <div class="field"><label>Product Name</label><input type="text" id="np-name" placeholder="Nissan Skyline GT-R R34"></div>
-                  <div class="field"><label>Scale</label><input type="text" id="np-scale" value="1:64"></div>
                 </div>
-                <div class="field"><label>Retail Price (BND)</label><input type="number" id="np-price" placeholder="8.90" step="0.10" style="max-width:200px"></div>
+                <div class="two-col">
+                  <div class="field"><label>Scale</label><input type="text" id="np-scale" value="1:64"></div>
+                  <div class="field"><label>Retail Price (BND)</label><input type="number" id="np-price" placeholder="8.90" step="0.10"></div>
+                </div>
                 <button class="btn btn-red btn-sm" onclick="addProductToBatch()">Add Product</button>
               </div>
             </details>
@@ -688,7 +691,7 @@ function renderProducts() {
 
     return '<div class="car-card'+(inCart?' in-cart':'')+(isActive?'':' closed-card')+'">'
       +'<div class="car-img">'+imgHtml+'</div>'
-      +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+'</div><div class="car-name">'+p.name+'</div>'
+      +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+(p.model?' · '+p.model:'')+'</div><div class="car-name">'+p.name+'</div>'
       +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div></div>'
       +bottomHtml+'</div>';
   }).join('');
@@ -1035,7 +1038,7 @@ function renderBatchDetail(batch,products){
     return '<div class="prod-admin-card">'
       +'<div class="prod-admin-img" onclick="triggerImageUpload(\''+p.id+'\')" title="Click to upload image">'+imgHtml+uploadOverlay+'</div>'
       +'<div class="prod-admin-info"><div class="prod-admin-name">'+p.name+'</div>'
-      +'<div class="prod-admin-meta">'+p.scale+' — BND $'+Number(p.price).toFixed(2)+'</div>'
+      +'<div class="prod-admin-meta">'+(p.model?'<span style="font-weight:700">'+p.model+'</span> · ':'')+p.scale+' — BND $'+Number(p.price).toFixed(2)+'</div>'
       +(p.image?'<button class="btn btn-outline btn-sm" style="margin-top:6px;font-size:11px" onclick="deleteProductImage(\''+p.id+'\',\''+p.image+'\')">🗑 Remove Image</button>':'')
       +'</div>'
       +(isActive?'<button class="btn btn-danger btn-sm" onclick="deleteProduct(\''+p.id+'\')">Remove</button>':'')
@@ -1093,14 +1096,15 @@ async function deleteProduct(productId){
 }
 
 async function addProductToBatch(){
+  var model=document.getElementById('np-model').value.trim();
   var name=document.getElementById('np-name').value.trim();
   var price=parseFloat(document.getElementById('np-price').value);
   var scale=document.getElementById('np-scale').value||'1:64';
   if(!name||isNaN(price)){toast('Enter name and price');return;}
   try{
-    var r=await fetch(API+'/api/admin/batches/'+S.selectedAdminBatchId+'/products',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify({name,scale,price})});
+    var r=await fetch(API+'/api/admin/batches/'+S.selectedAdminBatchId+'/products',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify({model,name,scale,price})});
     var d=await r.json();
-    if(d.success){toast('Product added!');document.getElementById('np-name').value='';document.getElementById('np-price').value='';await selectAdminBatch(S.selectedAdminBatchId);await loadAdminData();}
+    if(d.success){toast('Product added!');document.getElementById('np-model').value='';document.getElementById('np-name').value='';document.getElementById('np-price').value='';await selectAdminBatch(S.selectedAdminBatchId);await loadAdminData();}
     else toast(d.error||'Error adding product');
   }catch(e){toast('Connection error');}
 }
