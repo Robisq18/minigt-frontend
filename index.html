@@ -1007,7 +1007,7 @@ async function selectAdminBatch(batchId){
   var batch=S.adminBatches.find(function(b){return b.id===batchId;});
   if(!batch)return;
   try{
-    var r=await fetch(API+'/api/admin/batches/'+batchId+'/products',{headers:{Authorization:'Bearer '+S.adminToken}});
+    var r=await fetch(API+'/api/admin/batches/'+batchId+'/products?t='+Date.now(),{headers:{Authorization:'Bearer '+S.adminToken,'Cache-Control':'no-cache'}});
     var d=await r.json();
     var products=d.products||[];
     renderBatchDetail(batch,products);
