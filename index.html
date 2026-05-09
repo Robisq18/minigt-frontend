@@ -213,6 +213,7 @@
     <span class="nav-user" id="nav-user-name" style="display:none"></span>
     <button class="nav-tab active" id="nav-shop" onclick="showPage('shop',this)">Pre-Order</button>
     <button class="nav-tab" id="nav-history" onclick="showPage('history',this)" style="display:none">My Orders</button>
+    <button class="nav-tab" id="nav-account" onclick="showPage('account',this)" style="display:none">Account</button>
     <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)">Admin</button>
     <button class="nav-btn" id="nav-auth-btn" onclick="handleNavAuth()">Login</button>
   </div>
@@ -368,6 +369,26 @@
       <div class="order-panel" style="text-align:center;padding:36px">
         <div style="font-size:36px;margin-bottom:10px">📭</div>
         <p style="color:var(--muted);font-size:14px">You haven't placed any pre-orders yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ACCOUNT PAGE ═══ -->
+<div class="page" id="page-account">
+  <div style="max-width:420px;margin:32px auto">
+    <div class="card">
+      <h2>My Account</h2>
+      <p class="sub" id="account-name-display"></p>
+
+      <!-- CHANGE PASSWORD -->
+      <div style="border-top:0.5px solid var(--border);padding-top:18px;margin-top:4px">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">🔒 Change Password</div>
+        <div class="field"><label>Current Password</label><input type="password" id="cp-current" placeholder="Enter current password"></div>
+        <div class="field"><label>New Password</label><input type="password" id="cp-new" placeholder="At least 6 characters"></div>
+        <div class="field"><label>Confirm New Password</label><input type="password" id="cp-confirm" placeholder="Repeat new password"></div>
+        <div id="cp-msg" class="msg"></div>
+        <button class="btn btn-red btn-full" style="margin-top:4px" onclick="changePassword()">Update Password</button>
       </div>
     </div>
   </div>
@@ -541,10 +562,12 @@ function updateNavAuth() {
     nameEl.textContent = S.customer.firstName + ' ' + S.customer.lastName;
     nameEl.style.display = '';
     histTab.style.display = '';
+    document.getElementById('nav-account').style.display = '';
   } else {
     btn.textContent = 'Login';
     nameEl.style.display = 'none';
     histTab.style.display = 'none';
+    document.getElementById('nav-account').style.display = 'none';
   }
 }
 
@@ -1046,7 +1069,43 @@ function showPage(p,activeEl){
   if(activeEl)activeEl.classList.add('active');
   if(p==='admin'&&!S.adminToken){document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none';}
   if(p==='auth')switchAuthTab(S.currentAuthTab);
+  if(p==='account'){if(S.customer)loadAccount();else{showPage('auth',null);}}
   if(p==='history'){if(S.customer)loadHistory();else{showPage('auth',null);}}
+  if(p==='account'){if(S.customer)loadAccount();else{showPage('auth',null);}}
+}
+
+// ── ACCOUNT ───────────────────────────────────────────────
+function loadAccount() {
+  if (!S.customer) return;
+  document.getElementById('account-name-display').textContent =
+    S.customer.firstName + ' ' + S.customer.lastName + ' · ' + S.customer.phone;
+  ['cp-current','cp-new','cp-confirm'].forEach(function(id){ document.getElementById(id).value=''; });
+  showMsg('cp-msg','','');
+}
+
+async function changePassword() {
+  var current = document.getElementById('cp-current').value;
+  var newPw   = document.getElementById('cp-new').value;
+  var confirm = document.getElementById('cp-confirm').value;
+  if (!current) { showMsg('cp-msg','Enter your current password','error'); return; }
+  if (!newPw || newPw.length < 6) { showMsg('cp-msg','New password must be at least 6 characters','error'); return; }
+  if (newPw !== confirm) { showMsg('cp-msg','New passwords do not match','error'); return; }
+  var btn = event.target; btn.disabled=true; btn.textContent='Updating...';
+  try {
+    var r = await fetch(API+'/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type':'application/json', 'Authorization':'Bearer '+S.customerToken },
+      body: JSON.stringify({ currentPassword: current, newPassword: newPw })
+    });
+    var d = await r.json();
+    if (d.success) {
+      showMsg('cp-msg','Password updated successfully!','success');
+      ['cp-current','cp-new','cp-confirm'].forEach(function(id){ document.getElementById(id).value=''; });
+    } else {
+      showMsg('cp-msg', d.error||'Failed to update password','error');
+    }
+  } catch(e) { showMsg('cp-msg','Connection error. Please try again.','error'); }
+  btn.disabled=false; btn.textContent='Update Password';
 }
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2600);}
