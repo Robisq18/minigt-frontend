@@ -6,31 +6,25 @@
   <title>MINI GT Brunei — Pre-Order</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚗</text></svg>">
   <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- Firebase -->
+
+  <!-- Firebase (for registration OTP only) -->
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js';
     import { getAuth, RecaptchaVerifier, signInWithPhoneNumber } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyCcpBE8U_SxKg8mRSG7X3VN_u-YJFVms1Q",
-      authDomain: "minigt-brunei.firebaseapp.com",
-      projectId: "minigt-brunei",
-      storageBucket: "minigt-brunei.firebasestorage.app",
-      messagingSenderId: "548607657346",
-      appId: "1:548607657346:web:e1d061ca28d062b3313b9b"
-    };
-
-    const app = initializeApp(firebaseConfig);
+    const app = initializeApp({
+      apiKey:"AIzaSyCcpBE8U_SxKg8mRSG7X3VN_u-YJFVms1Q",
+      authDomain:"minigt-brunei.firebaseapp.com",
+      projectId:"minigt-brunei",
+      storageBucket:"minigt-brunei.firebasestorage.app",
+      messagingSenderId:"548607657346",
+      appId:"1:548607657346:web:e1d061ca28d062b3313b9b"
+    });
     const auth = getAuth(app);
     auth.languageCode = 'en';
-
-    // Expose to global scope for use in regular scripts
     window._fbAuth = auth;
-    window._fbRecaptchaVerifier = null;
     window._fbConfirmationResult = null;
     window.RecaptchaVerifier = RecaptchaVerifier;
     window.signInWithPhoneNumber = signInWithPhoneNumber;
-    window._firebaseReady = true;
     document.dispatchEvent(new Event('firebaseReady'));
   </script>
 
@@ -38,7 +32,7 @@
     *{box-sizing:border-box;margin:0;padding:0}
     :root{
       --red:#C0272D;--red-dark:#8B1A1D;--red-light:#FAECEC;
-      --gold:#D4A017;--gold-light:#FDF3D8;
+      --gold-light:#FDF3D8;
       --bg:#F5F4F2;--surface:#fff;--text:#1A1A1A;--muted:#6B6B6B;
       --border:rgba(0,0,0,0.10);--radius:10px;
       --font-head:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;
@@ -46,43 +40,50 @@
     body{font-family:var(--font-body);background:var(--bg);color:var(--text);min-height:100vh;font-size:15px}
     /* NAV */
     .nav{background:var(--red);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:100;gap:12px}
-    .nav-brand{font-family:var(--font-head);color:#fff;font-size:20px;letter-spacing:1px;white-space:nowrap}
-    .nav-right{display:flex;align-items:center;gap:8px;flex-shrink:0}
-    .nav-user{color:rgba(255,255,255,0.9);font-size:13px;font-weight:500;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .nav-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:5px 12px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);white-space:nowrap}
-    .nav-btn:hover{background:rgba(255,255,255,0.25)}
-    .nav-tab{background:none;border:none;color:rgba(255,255,255,0.7);padding:5px 10px;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:500}
+    .nav-brand{font-family:var(--font-head);color:#fff;font-size:20px;letter-spacing:1px;white-space:nowrap;display:flex;align-items:center;gap:8px}
+    .nav-brand span{font-family:var(--font-body);font-size:12px;opacity:.8;font-weight:600;background:rgba(255,255,255,0.15);padding:2px 7px;border-radius:4px}
+    .nav-right{display:flex;align-items:center;gap:6px;flex-shrink:0}
+    .nav-user{color:rgba(255,255,255,0.9);font-size:13px;font-weight:600;white-space:nowrap;max-width:130px;overflow:hidden;text-overflow:ellipsis}
+    .nav-btn{background:rgba(255,255,255,0.15);border:none;color:#fff;padding:5px 11px;border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);white-space:nowrap;transition:background .15s}
+    .nav-btn:hover{background:rgba(255,255,255,0.28)}
+    .nav-tab{background:none;border:none;color:rgba(255,255,255,0.7);padding:5px 10px;border-radius:6px;cursor:pointer;font-family:var(--font-body);font-size:13px;font-weight:500;transition:all .15s}
     .nav-tab.active,.nav-tab:hover{background:rgba(255,255,255,0.2);color:#fff}
     /* PAGES */
-    .page{display:none;padding:20px;max-width:860px;margin:0 auto}
+    .page{display:none;padding:20px;max-width:880px;margin:0 auto}
     .page.active{display:block}
-    /* AUTH PAGE */
-    .auth-wrap{max-width:400px;margin:40px auto}
-    .auth-card{background:var(--surface);border-radius:12px;border:0.5px solid var(--border);padding:28px 24px}
-    .auth-card h2{font-family:var(--font-head);font-size:26px;letter-spacing:.5px;margin-bottom:4px}
-    .auth-card p{font-size:13px;color:var(--muted);margin-bottom:20px}
-    .auth-tabs{display:flex;gap:0;border:0.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px}
-    .auth-tab{flex:1;padding:8px;text-align:center;cursor:pointer;font-size:14px;font-weight:600;border:none;background:none;font-family:var(--font-body);color:var(--muted);transition:all .15s}
-    .auth-tab.active{background:var(--red);color:#fff}
-    /* FORM ELEMENTS */
+    /* CARDS */
+    .card{background:var(--surface);border-radius:12px;border:0.5px solid var(--border);padding:24px}
+    .card h2{font-family:var(--font-head);font-size:24px;letter-spacing:.5px;margin-bottom:4px}
+    .card p.sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+    /* TABS */
+    .tab-row{display:flex;border:0.5px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:20px}
+    .tab-btn{flex:1;padding:8px;text-align:center;cursor:pointer;font-size:14px;font-weight:600;border:none;background:none;font-family:var(--font-body);color:var(--muted);transition:all .15s}
+    .tab-btn.active{background:var(--red);color:#fff}
+    /* FORM */
     .field{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
     .field label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
     .field input,.field select{border:0.5px solid var(--border);border-radius:7px;padding:9px 12px;font-size:14px;font-family:var(--font-body);background:var(--surface);color:var(--text);outline:none;transition:border .15s;width:100%}
     .field input:focus,.field select:focus{border-color:var(--red)}
+    .field input[type=password]{letter-spacing:2px}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .phone-row{display:flex;gap:8px}
     .phone-row select{width:110px;flex-shrink:0}
     .phone-row input{flex:1}
     .code-row{display:flex;gap:8px}
     .code-row input{flex:1;letter-spacing:6px;font-size:20px;font-weight:700;text-align:center}
-    .btn{border:none;padding:10px 18px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
+    /* BUTTONS */
+    .btn{border:none;padding:10px 18px;border-radius:7px;font-size:14px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;gap:6px}
     .btn-red{background:var(--red);color:#fff}
     .btn-red:hover{background:var(--red-dark)}
     .btn-red:disabled{opacity:.4;cursor:not-allowed}
     .btn-outline{background:transparent;border:0.5px solid var(--border);color:var(--text)}
     .btn-outline:hover{border-color:var(--red);color:var(--red)}
-    .btn-sm{padding:6px 12px;font-size:13px}
-    .btn-full{width:100%;justify-content:center}
-    .msg{font-size:12px;padding:8px 12px;border-radius:6px;margin-top:8px;display:none}
+    .btn-sm{padding:6px 12px;font-size:12px}
+    .btn-full{width:100%}
+    .btn-danger{background:#fff;border:0.5px solid #fca5a5;color:#DC2626}
+    .btn-danger:hover{background:#FEF2F2}
+    /* MESSAGES */
+    .msg{font-size:12px;padding:8px 12px;border-radius:6px;margin-top:6px;display:none}
     .msg.error{display:block;background:var(--red-light);color:var(--red)}
     .msg.success{display:block;background:#E8F5E9;color:#2E7D32}
     .msg.info{display:block;background:#E3F2FD;color:#1565C0}
@@ -92,83 +93,86 @@
     .batch-banner p{font-size:13px;opacity:.85;margin-top:2px}
     .deadline-box{background:rgba(0,0,0,0.2);border-radius:8px;padding:10px 14px;text-align:center;min-width:120px}
     .deadline-box .label{font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px}
-    .deadline-box .countdown{font-family:var(--font-head);font-size:24px;letter-spacing:2px}
-    /* PRODUCTS GRID */
+    .countdown{font-family:var(--font-head);font-size:24px;letter-spacing:2px}
+    /* PRODUCTS */
     .section-title{font-family:var(--font-head);font-size:18px;letter-spacing:.5px;margin-bottom:14px}
     .cars-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:14px;margin-bottom:28px}
     .car-card{background:var(--surface);border-radius:var(--radius);border:1.5px solid var(--border);overflow:hidden;transition:transform .15s,box-shadow .15s}
     .car-card:hover{transform:translateY(-2px);box-shadow:0 4px 16px rgba(0,0,0,0.09)}
     .car-card.in-cart{border-color:var(--red);box-shadow:0 0 0 3px rgba(192,39,45,0.10)}
-    .car-img{width:100%;height:120px;object-fit:cover;background:#F0EFED;display:flex;align-items:center;justify-content:center;font-size:44px}
+    .car-img{width:100%;height:120px;background:#F0EFED;display:flex;align-items:center;justify-content:center;font-size:44px;overflow:hidden}
     .car-img img{width:100%;height:120px;object-fit:cover}
     .car-info{padding:9px 11px 4px}
     .car-scale{font-size:10px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.5px}
     .car-name{font-size:12px;font-weight:600;line-height:1.3;margin:2px 0 5px}
     .car-price{font-family:var(--font-head);font-size:17px;color:var(--red)}
     .car-price span{font-size:11px;font-family:var(--font-body);color:var(--muted);font-weight:400}
-    /* QTY CONTROL ON CARD */
     .car-qty{padding:8px 10px;display:flex;align-items:center;justify-content:space-between;border-top:0.5px solid var(--border);margin-top:6px;gap:6px}
-    .qty-ctrl{display:flex;align-items:center;gap:0;border:0.5px solid var(--border);border-radius:6px;overflow:hidden}
-    .qty-ctrl button{width:28px;height:28px;border:none;background:#f5f4f2;cursor:pointer;font-size:15px;font-weight:700;color:var(--text);transition:background .1s;flex-shrink:0}
+    .qty-ctrl{display:flex;align-items:center;border:0.5px solid var(--border);border-radius:6px;overflow:hidden}
+    .qty-ctrl button{width:28px;height:28px;border:none;background:#f5f4f2;cursor:pointer;font-size:16px;font-weight:700;color:var(--text);transition:background .1s}
     .qty-ctrl button:hover{background:#e8e7e5}
-    .qty-ctrl button:disabled{opacity:.3;cursor:not-allowed}
-    .qty-ctrl span{min-width:28px;text-align:center;font-size:13px;font-weight:700;padding:0 2px}
+    .qty-ctrl span{min-width:28px;text-align:center;font-size:13px;font-weight:700}
     .add-btn{flex:1;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:6px 8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:background .15s;text-align:center}
     .add-btn:hover,.car-card.in-cart .add-btn{background:var(--red);color:#fff}
     /* CART FLOAT */
     .cart-float{position:sticky;bottom:16px;text-align:center;padding-top:12px;display:none}
     .cart-float-btn{background:var(--red);color:#fff;border:none;padding:12px 28px;border-radius:30px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font-body);box-shadow:0 4px 20px rgba(192,39,45,0.35);display:inline-flex;align-items:center;gap:10px}
     .cart-badge{background:#fff;color:var(--red);border-radius:20px;padding:2px 8px;font-size:12px;font-weight:700}
-    /* CART / ORDER PANEL */
+    /* ORDER PANEL */
     .order-panel{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:18px 20px;margin-bottom:20px}
-    .order-panel h3{font-size:14px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px}
+    .order-panel h3{font-size:14px;font-weight:700;margin-bottom:14px}
     .order-items{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
     .order-item{display:flex;align-items:center;gap:10px;font-size:13px}
     .order-item .name{flex:1;color:var(--muted)}
     .order-item .subtotal{font-weight:600;min-width:54px;text-align:right}
     .order-total-row{border-top:0.5px solid var(--border);padding-top:10px;display:flex;justify-content:space-between;font-weight:700;font-size:15px}
-    /* STEPS */
-    .steps{display:flex;align-items:center;margin-bottom:18px}
-    .step-item{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
-    .step-item.active{color:var(--red)}
-    .step-item.done{color:#2E7D32}
-    .step-num{width:20px;height:20px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0}
-    .step-line{flex:1;height:1px;background:var(--border);margin:0 5px}
-    /* NOTICE */
-    .notice{background:var(--gold-light);border-radius:6px;padding:10px 14px;font-size:13px;color:#7A5C00;margin-bottom:14px}
     /* CLOSED */
     .closed-wrap{text-align:center;padding:48px 24px}
     .closed-wrap h2{font-family:var(--font-head);font-size:28px;color:var(--muted);margin:12px 0 6px}
     /* SUCCESS */
     .success-wrap{text-align:center;padding:40px 24px}
     .success-ref{background:var(--bg);border-radius:8px;padding:10px 16px;display:inline-block;font-size:14px;font-weight:700;color:var(--red);margin:12px 0}
+    /* HISTORY */
+    .history-card{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:16px 18px;margin-bottom:12px}
+    .history-batch{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+    .history-ref{font-family:var(--font-head);font-size:18px;color:var(--red);letter-spacing:.5px}
+    .history-items{margin-top:8px;display:flex;flex-direction:column;gap:4px}
+    .history-item{display:flex;justify-content:space-between;font-size:13px;color:var(--muted)}
+    .history-total{border-top:0.5px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;font-weight:700;font-size:14px}
     /* ADMIN */
-    .admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px}
-    .admin-card{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:16px 18px}
-    .admin-card h3{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
-    .admin-card .big{font-family:var(--font-head);font-size:32px}
-    .admin-card .sub{font-size:11px;color:var(--muted);margin-top:2px}
+    .admin-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+    .admin-stat{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:14px 16px}
+    .admin-stat h3{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+    .admin-stat .big{font-family:var(--font-head);font-size:30px}
     .admin-section{background:var(--surface);border-radius:var(--radius);border:0.5px solid var(--border);padding:18px 20px;margin-bottom:16px}
     .admin-section h3{font-size:14px;font-weight:700;margin-bottom:14px;padding-bottom:10px;border-bottom:0.5px solid var(--border)}
+    .admin-tabs{display:flex;gap:6px;margin-bottom:16px}
+    .admin-tab{padding:6px 14px;border-radius:6px;border:0.5px solid var(--border);background:none;font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font-body);color:var(--muted)}
+    .admin-tab.active{background:var(--red);color:#fff;border-color:var(--red)}
     table{width:100%;border-collapse:collapse;font-size:12px}
     th{text-align:left;padding:7px 9px;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;border-bottom:0.5px solid var(--border)}
-    td{padding:8px 9px;border-bottom:0.5px solid var(--border)}
+    td{padding:8px 9px;border-bottom:0.5px solid var(--border);vertical-align:top}
     tr:last-child td{border-bottom:none}
     .badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:700}
     .badge-green{background:#E8F5E9;color:#2E7D32}
-    .badge-gray{background:#F0F0F0;color:var(--muted)}
     .prod-row{display:flex;align-items:center;gap:10px;padding:9px 10px;background:var(--bg);border-radius:6px;margin-bottom:8px}
-    .prod-emoji{font-size:22px;width:36px;text-align:center;flex-shrink:0}
+    .prod-emoji{font-size:20px;width:32px;text-align:center;flex-shrink:0}
     .prod-info{flex:1}
     .prod-name{font-size:13px;font-weight:600}
     .prod-meta{font-size:11px;color:var(--muted)}
     .toggle-btn{padding:6px 12px;border-radius:6px;border:0.5px solid var(--border);background:none;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);color:var(--muted)}
     .toggle-btn.active{background:var(--red);color:#fff;border-color:var(--red)}
+    /* MODAL */
+    .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+    .modal-bg.show{display:flex}
+    .modal{background:var(--surface);border-radius:12px;padding:24px;max-width:400px;width:100%;max-height:90vh;overflow-y:auto}
+    .modal h3{font-size:16px;font-weight:700;margin-bottom:16px}
     /* TOAST */
     .toast{position:fixed;bottom:20px;right:20px;background:#1A1A1A;color:#fff;padding:10px 16px;border-radius:8px;font-size:13px;font-weight:500;z-index:9999;display:none;max-width:260px}
     .toast.show{display:block}
-    @media(max-width:540px){
-      .admin-grid{grid-template-columns:1fr}
+    @media(max-width:600px){
+      .admin-grid{grid-template-columns:1fr 1fr}
+      .two-col{grid-template-columns:1fr}
       .batch-banner{flex-direction:column}
       .nav-user{display:none}
     }
@@ -177,20 +181,19 @@
 <body>
 
 <nav class="nav">
-  <div class="nav-brand">🚗 MINI GT <span style="font-family:var(--font-body);font-size:13px;opacity:.8;font-weight:600;background:rgba(255,255,255,0.15);padding:2px 7px;border-radius:4px;margin-left:4px">Brunei</span></div>
+  <div class="nav-brand">🚗 MINI GT <span>Brunei</span></div>
   <div class="nav-right">
     <span class="nav-user" id="nav-user-name" style="display:none"></span>
     <button class="nav-tab active" id="nav-shop" onclick="showPage('shop',this)">Pre-Order</button>
-    <button class="nav-tab" id="nav-admin" onclick="showPage('admin',this)">Admin</button>
+    <button class="nav-tab" id="nav-history" onclick="showPage('history',this)" style="display:none">My Orders</button>
+    <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)">Admin</button>
     <button class="nav-btn" id="nav-auth-btn" onclick="handleNavAuth()">Login</button>
   </div>
 </nav>
 
-<!-- ═══════════════════ SHOP PAGE ═══════════════════ -->
+<!-- ═══ SHOP PAGE ═══ -->
 <div class="page active" id="page-shop">
-  <div id="shop-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">Loading current batch...</div>
-
-  <!-- OPEN STATE -->
+  <div id="shop-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">Loading...</div>
   <div id="shop-open" style="display:none">
     <div class="batch-banner">
       <div>
@@ -204,50 +207,43 @@
         <div style="font-size:10px;opacity:.6;margin-top:2px" id="deadline-text"></div>
       </div>
     </div>
-
     <div class="section-title">Available Models <span id="model-count" style="font-size:13px;font-family:var(--font-body);font-weight:400;color:var(--muted)"></span></div>
     <div class="cars-grid" id="cars-grid"></div>
 
-    <!-- ORDER FLOW (shown after clicking cart button) -->
+    <!-- ORDER FLOW -->
     <div id="order-flow" style="display:none">
-
-      <!-- STEP 1: Review & Confirm -->
       <div id="flow-step1">
-        <div class="steps">
-          <div class="step-item active" id="s1"><div class="step-num">1</div> Review</div>
-          <div class="step-line"></div>
-          <div class="step-item" id="s2"><div class="step-num">2</div> Confirm</div>
-        </div>
         <div class="order-panel">
           <h3>🛒 Your Order</h3>
           <div class="order-items" id="flow-items"></div>
           <div class="order-total-row"><span>Total</span><span id="flow-total">BND $0.00</span></div>
         </div>
         <div class="order-panel">
-          <h3>👤 Delivering to</h3>
-          <div id="flow-customer-info" style="font-size:14px;color:var(--muted);line-height:1.8"></div>
-          <div style="margin-top:12px;display:flex;justify-content:space-between;gap:8px">
+          <h3>👤 Ordering as</h3>
+          <div id="flow-customer-info" style="font-size:14px;color:var(--muted);line-height:1.9"></div>
+          <div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px">
             <button class="btn btn-outline btn-sm" onclick="closeOrderFlow()">← Back</button>
             <button class="btn btn-red" onclick="submitOrder()">🎉 Place Pre-Order</button>
           </div>
         </div>
       </div>
-
-      <!-- SUCCESS -->
       <div id="flow-success" style="display:none">
         <div class="order-panel">
           <div class="success-wrap">
             <div style="font-size:48px">🎉</div>
             <h3 style="font-size:18px;margin:8px 0">Pre-Order Confirmed!</h3>
-            <p style="font-size:13px;color:var(--muted)">We'll contact you on WhatsApp once the batch closes.</p>
+            <p style="font-size:13px;color:var(--muted)">We'll contact you once the batch closes.</p>
             <div class="success-ref" id="success-ref"></div>
-            <button class="btn btn-outline btn-sm" onclick="resetAfterOrder()">Done</button>
+            <div style="display:flex;gap:8px;justify-content:center;margin-top:4px">
+              <button class="btn btn-outline btn-sm" onclick="resetAfterOrder()">Continue Shopping</button>
+              <button class="btn btn-red btn-sm" onclick="showPage('history',document.getElementById('nav-history'))">View My Orders</button>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- LOGIN PROMPT (shown if not logged in when trying to order) -->
+    <!-- LOGIN PROMPT -->
     <div id="login-prompt" style="display:none">
       <div class="order-panel" style="text-align:center;padding:28px">
         <div style="font-size:32px;margin-bottom:10px">🔐</div>
@@ -262,118 +258,122 @@
 
     <div class="cart-float" id="cart-float">
       <button class="cart-float-btn" onclick="openOrderFlow()">
-        Pre-Order <span class="cart-badge" id="cart-badge-text">0 items · BND $0.00</span>
+        Pre-Order <span class="cart-badge" id="cart-badge-text">0 items</span>
       </button>
     </div>
   </div>
-
-  <!-- CLOSED STATE -->
   <div id="shop-closed" style="display:none">
-    <div class="order-panel">
-      <div class="closed-wrap">
-        <div style="font-size:48px">🔒</div>
-        <h2>Pre-Order Closed</h2>
-        <p style="color:var(--muted);font-size:14px">This batch has ended. Stay tuned for the next batch!</p>
-      </div>
-    </div>
+    <div class="order-panel"><div class="closed-wrap"><div style="font-size:48px">🔒</div><h2>Pre-Order Closed</h2><p style="color:var(--muted);font-size:14px">Stay tuned for the next batch!</p></div></div>
   </div>
 </div>
 
-<!-- ═══════════════════ AUTH PAGE ═══════════════════ -->
+<!-- ═══ AUTH PAGE ═══ -->
 <div class="page" id="page-auth">
-  <div class="auth-wrap">
-    <div class="auth-card">
+  <div style="max-width:420px;margin:32px auto">
+    <div class="card">
       <h2>Welcome</h2>
-      <p>Login or create an account to place pre-orders.</p>
-
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
-        <button class="auth-tab" id="tab-register" onclick="switchAuthTab('register')">Register</button>
+      <p class="sub">Login or create an account to place pre-orders.</p>
+      <div class="tab-row">
+        <button class="tab-btn active" id="tab-login" onclick="switchAuthTab('login')">Login</button>
+        <button class="tab-btn" id="tab-register" onclick="switchAuthTab('register')">Register</button>
       </div>
 
-      <!-- LOGIN FLOW -->
+      <!-- LOGIN -->
       <div id="auth-login">
-        <div id="login-step1">
-          <div class="field">
-            <label>Phone Number</label>
-            <div class="phone-row">
-              <select id="login-code"><option value="+673">🇧🇳 +673</option><option value="+60">🇲🇾 +60</option><option value="+65">🇸🇬 +65</option><option value="+62">🇮🇩 +62</option></select>
-              <input type="tel" id="login-phone" placeholder="7XXXXXXX">
-            </div>
+        <div class="field"><label>Phone Number</label>
+          <div class="phone-row">
+            <select id="login-cc"><option value="+673">🇧🇳 +673</option><option value="+60">🇲🇾 +60</option><option value="+65">🇸🇬 +65</option><option value="+62">🇮🇩 +62</option></select>
+            <input type="tel" id="login-phone" placeholder="7XXXXXXX">
           </div>
-          <div id="login-msg1" class="msg"></div>
-          <button class="btn btn-red btn-full" id="login-send-btn" onclick="loginSendCode()">Send Code via SMS</button>
         </div>
-        <div id="login-step2" style="display:none">
-          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Enter the 6-digit code sent to <strong id="login-phone-display"></strong></p>
-          <div class="field">
-            <label>Verification Code</label>
-            <div class="code-row">
-              <input type="text" id="login-verify-code" placeholder="123456" maxlength="6">
-              <button class="btn btn-red" onclick="loginVerify()">Verify</button>
-            </div>
-          </div>
-          <div id="login-msg2" class="msg"></div>
-          <button class="btn btn-outline btn-sm" onclick="loginBack()" style="margin-top:8px">← Change number</button>
-        </div>
+        <div class="field"><label>Password</label><input type="password" id="login-password" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()"></div>
+        <div id="login-msg" class="msg"></div>
+        <button class="btn btn-red btn-full" style="margin-top:4px" onclick="doLogin()">Login</button>
       </div>
 
-      <!-- REGISTER FLOW -->
+      <!-- REGISTER -->
       <div id="auth-register" style="display:none">
+        <!-- Step 1: Details + phone -->
         <div id="reg-step1">
-          <div class="field"><label>Full Name</label><input type="text" id="reg-name" placeholder="Ahmad Abdullah"></div>
-          <div class="field">
-            <label>Phone Number</label>
+          <div class="two-col">
+            <div class="field"><label>First Name</label><input type="text" id="reg-first" placeholder="Ahmad"></div>
+            <div class="field"><label>Last Name</label><input type="text" id="reg-last" placeholder="Abdullah"></div>
+          </div>
+          <div class="field"><label>Mobile Phone</label>
             <div class="phone-row">
-              <select id="reg-code"><option value="+673">🇧🇳 +673</option><option value="+60">🇲🇾 +60</option><option value="+65">🇸🇬 +65</option><option value="+62">🇮🇩 +62</option></select>
+              <select id="reg-cc"><option value="+673">🇧🇳 +673</option><option value="+60">🇲🇾 +60</option><option value="+65">🇸🇬 +65</option><option value="+62">🇮🇩 +62</option></select>
               <input type="tel" id="reg-phone" placeholder="7XXXXXXX">
             </div>
           </div>
-          <div class="field"><label>Address (optional)</label><input type="text" id="reg-address" placeholder="Block, street, district..."></div>
+          <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="At least 6 characters"></div>
+          <div class="field"><label>Confirm Password</label><input type="password" id="reg-password2" placeholder="Repeat password"></div>
           <div id="reg-msg1" class="msg"></div>
-          <button class="btn btn-red btn-full" onclick="regSendCode()">Send Verification Code</button>
+          <button class="btn btn-red btn-full" onclick="regStep1()">Send Verification Code</button>
+          <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">A code will be sent to your WhatsApp/SMS to verify your number.</p>
         </div>
+        <!-- Step 2: OTP -->
         <div id="reg-step2" style="display:none">
-          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Enter the code sent to <strong id="reg-phone-display"></strong></p>
-          <div class="field">
-            <label>Verification Code</label>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Enter the 6-digit code sent to <strong id="reg-phone-display"></strong></p>
+          <div class="field"><label>Verification Code</label>
             <div class="code-row">
-              <input type="text" id="reg-verify-code" placeholder="123456" maxlength="6">
-              <button class="btn btn-red" onclick="regVerify()">Create Account</button>
+              <input type="text" id="reg-code" placeholder="123456" maxlength="6">
+              <button class="btn btn-red" onclick="regStep2()">Verify & Create</button>
             </div>
           </div>
           <div id="reg-msg2" class="msg"></div>
-          <button class="btn btn-outline btn-sm" onclick="regBack()" style="margin-top:8px">← Back</button>
+          <button class="btn btn-outline btn-sm" onclick="regBack()" style="margin-top:8px">← Change details</button>
         </div>
       </div>
     </div>
-    <p style="text-align:center;font-size:12px;color:var(--muted);margin-top:12px">Your phone number is used to prevent duplicate orders.</p>
   </div>
 </div>
 
-<!-- ═══════════════════ ADMIN PAGE ═══════════════════ -->
+<!-- ═══ HISTORY PAGE ═══ -->
+<div class="page" id="page-history">
+  <div style="max-width:600px;margin:0 auto">
+    <div class="section-title" style="margin-bottom:16px">📦 My Pre-Order History</div>
+    <div id="history-loading" style="text-align:center;padding:32px;color:var(--muted);font-size:14px">Loading...</div>
+    <div id="history-list"></div>
+    <div id="history-empty" style="display:none">
+      <div class="order-panel" style="text-align:center;padding:36px">
+        <div style="font-size:36px;margin-bottom:10px">📭</div>
+        <p style="color:var(--muted);font-size:14px">You haven't placed any pre-orders yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ ADMIN PAGE ═══ -->
 <div class="page" id="page-admin">
   <div id="admin-login-wrap" style="max-width:340px;margin:40px auto">
-    <div class="auth-card">
+    <div class="card">
       <h2>Admin</h2>
-      <p>Sign in to manage pre-orders.</p>
+      <p class="sub">Sign in to manage pre-orders.</p>
       <div class="field"><label>Password</label><input type="password" id="admin-pw" placeholder="Admin password" onkeydown="if(event.key==='Enter')adminLogin()"></div>
       <button class="btn btn-red btn-full" onclick="adminLogin()">Sign In</button>
-      <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">Demo password: admin123</p>
     </div>
   </div>
 
   <div id="admin-panel" style="display:none">
     <div class="admin-grid">
-      <div class="admin-card"><h3>Orders</h3><div class="big" id="a-orders">–</div><div class="sub">This batch</div></div>
-      <div class="admin-card"><h3>Units</h3><div class="big" id="a-units">–</div><div class="sub">Pre-ordered</div></div>
-      <div class="admin-card"><h3>Customers</h3><div class="big" id="a-customers">–</div><div class="sub">Registered</div></div>
-      <div class="admin-card"><h3>Status</h3><div class="big" id="a-status" style="font-size:18px;margin-top:6px">–</div><div class="sub" id="a-deadline"></div></div>
+      <div class="admin-stat"><h3>Orders</h3><div class="big" id="a-orders">–</div></div>
+      <div class="admin-stat"><h3>Units</h3><div class="big" id="a-units">–</div></div>
+      <div class="admin-stat"><h3>Customers</h3><div class="big" id="a-customers">–</div></div>
+      <div class="admin-stat"><h3>Status</h3><div class="big" id="a-status" style="font-size:18px;margin-top:6px">–</div></div>
     </div>
 
-    <div class="admin-section">
+    <!-- ADMIN TABS -->
+    <div class="admin-tabs">
+      <button class="admin-tab active" onclick="switchAdminTab('batch',this)">Batch</button>
+      <button class="admin-tab" onclick="switchAdminTab('products',this)">Products</button>
+      <button class="admin-tab" onclick="switchAdminTab('orders',this)">Orders</button>
+      <button class="admin-tab" onclick="switchAdminTab('customers',this)">Customers</button>
+    </div>
+
+    <!-- BATCH TAB -->
+    <div id="atab-batch" class="admin-section">
       <h3>Batch Settings</h3>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+      <div class="two-col" style="margin-bottom:12px">
         <div class="field"><label>Batch Name</label><input type="text" id="a-title"></div>
         <div class="field"><label>Description</label><input type="text" id="a-desc"></div>
         <div class="field"><label>Deadline</label><input type="datetime-local" id="a-deadline-input"></div>
@@ -387,12 +387,13 @@
       <button class="btn btn-red btn-sm" onclick="saveBatch()">Save Settings</button>
     </div>
 
-    <div class="admin-section">
+    <!-- PRODUCTS TAB -->
+    <div id="atab-products" class="admin-section" style="display:none">
       <h3>Products</h3>
       <div id="a-products-list"></div>
       <details style="margin-top:8px">
         <summary style="font-size:13px;font-weight:700;color:var(--red);cursor:pointer;padding:6px 0">+ Add New Model</summary>
-        <div style="padding:14px 0;display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="padding:14px 0" class="two-col">
           <div class="field"><label>Name</label><input type="text" id="a-prod-name" placeholder="Honda Civic Type R"></div>
           <div class="field"><label>Scale</label><input type="text" id="a-prod-scale" value="1:64"></div>
           <div class="field"><label>Price (BND)</label><input type="number" id="a-prod-price" placeholder="8.90" step="0.10"></div>
@@ -402,11 +403,12 @@
       </details>
     </div>
 
-    <div class="admin-section">
+    <!-- ORDERS TAB -->
+    <div id="atab-orders" class="admin-section" style="display:none">
       <h3>Pre-Orders</h3>
       <div style="overflow-x:auto">
         <table>
-          <thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>Models</th><th>Total</th><th>Date</th></tr></thead>
+          <thead><tr><th>Ref</th><th>Name</th><th>Phone</th><th>Batch</th><th>Models</th><th>Total</th><th>Date</th></tr></thead>
           <tbody id="a-orders-table"></tbody>
         </table>
         <div id="a-no-orders" style="text-align:center;padding:20px;font-size:13px;color:var(--muted)">No orders yet.</div>
@@ -414,7 +416,51 @@
       <div style="margin-top:10px;text-align:right"><button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ Export CSV</button></div>
     </div>
 
+    <!-- CUSTOMERS TAB -->
+    <div id="atab-customers" class="admin-section" style="display:none">
+      <h3>Customers</h3>
+      <div style="overflow-x:auto">
+        <table>
+          <thead><tr><th>Name</th><th>Phone</th><th>Orders</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="a-customers-table"></tbody>
+        </table>
+        <div id="a-no-customers" style="text-align:center;padding:20px;font-size:13px;color:var(--muted)">No customers yet.</div>
+      </div>
+    </div>
+
     <div style="text-align:right;margin-top:8px"><button class="btn btn-outline btn-sm" onclick="adminLogout()">Sign Out</button></div>
+  </div>
+</div>
+
+<!-- CUSTOMER DETAIL MODAL -->
+<div class="modal-bg" id="customer-modal">
+  <div class="modal">
+    <h3 id="modal-title">Customer Details</h3>
+    <div id="modal-body"></div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn btn-outline btn-sm" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT CUSTOMER MODAL -->
+<div class="modal-bg" id="edit-modal">
+  <div class="modal">
+    <h3>Edit Customer</h3>
+    <input type="hidden" id="edit-phone">
+    <div class="field"><label>First Name</label><input type="text" id="edit-first"></div>
+    <div class="field"><label>Last Name</label><input type="text" id="edit-last"></div>
+    <div style="border-top:0.5px solid var(--border);padding-top:14px;margin-top:4px">
+      <div class="field"><label>Reset Password (optional)</label><input type="password" id="edit-pw" placeholder="Leave blank to keep current"></div>
+    </div>
+    <div id="edit-msg" class="msg"></div>
+    <div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px">
+      <button class="btn btn-danger btn-sm" onclick="deleteCustomer()">Delete Account</button>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-outline btn-sm" onclick="closeEditModal()">Cancel</button>
+        <button class="btn btn-red btn-sm" onclick="saveCustomer()">Save Changes</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -425,16 +471,15 @@
 const API = 'https://minigt-backend-production.up.railway.app';
 
 var S = {
-  batch: null, products: [], cart: {}, // cart: { productId: qty }
+  batch: null, products: [], cart: {},
   customer: null, customerToken: null,
   adminToken: null, orders: [], adminCustomers: [],
   currentAuthTab: 'login',
-  loginPhone: '', regPhone: ''
+  regPhone: '', regData: null,
 };
 
 // ── BOOT ──────────────────────────────────────────────────
 async function boot() {
-  // Restore session
   S.customerToken = localStorage.getItem('ctoken');
   if (S.customerToken) {
     try {
@@ -444,14 +489,13 @@ async function boot() {
     } catch(e) { S.customerToken = null; }
   }
   updateNavAuth();
-
   try {
     var r = await fetch(API+'/api/batch');
     var d = await r.json();
     S.batch = d.batch; S.products = d.products;
   } catch(e) {
     S.batch = {title:'Batch #12 — May 2025',desc:'Select your models before the deadline.',deadline:new Date(Date.now()+7*24*60*60*1000).toISOString(),status:'open'};
-    S.products = [{id:'p1',name:'Nissan Skyline GT-R R34 V-Spec',scale:'1:64',price:8.90,image:'',sort:1},{id:'p2',name:'Toyota Supra A80 RZ',scale:'1:64',price:8.90,image:'',sort:2},{id:'p3',name:'Honda NSX Type R NA1',scale:'1:64',price:9.50,image:'',sort:3},{id:'p4',name:'Mazda RX-7 FD3S Spirit R',scale:'1:64',price:9.50,image:'',sort:4},{id:'p5',name:'Mitsubishi Lancer Evo IX',scale:'1:64',price:8.90,image:'',sort:5},{id:'p6',name:'Subaru Impreza WRX STI',scale:'1:64',price:8.90,image:'',sort:6}];
+    S.products = [{id:'p1',name:'Nissan Skyline GT-R R34',scale:'1:64',price:8.90,image:'',sort:1},{id:'p2',name:'Toyota Supra A80 RZ',scale:'1:64',price:8.90,image:'',sort:2},{id:'p3',name:'Honda NSX Type R',scale:'1:64',price:9.50,image:'',sort:3}];
   }
   document.getElementById('shop-loading').style.display = 'none';
   renderShop();
@@ -461,32 +505,33 @@ async function boot() {
 function updateNavAuth() {
   var btn = document.getElementById('nav-auth-btn');
   var nameEl = document.getElementById('nav-user-name');
+  var histTab = document.getElementById('nav-history');
   if (S.customer) {
     btn.textContent = 'Logout';
-    nameEl.textContent = 'Hi, ' + S.customer.name.split(' ')[0];
+    nameEl.textContent = S.customer.firstName + ' ' + S.customer.lastName;
     nameEl.style.display = '';
+    histTab.style.display = '';
   } else {
     btn.textContent = 'Login';
     nameEl.style.display = 'none';
+    histTab.style.display = 'none';
   }
 }
 
 function handleNavAuth() {
-  if (S.customer) {
-    logout();
-  } else {
-    showPage('auth', document.getElementById('nav-shop'));
-    document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-  }
+  if (S.customer) { doLogout(); }
+  else { showPage('auth',null); document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active')); }
 }
 
-async function logout() {
+async function doLogout() {
   if (S.customerToken) {
     try { await fetch(API+'/api/auth/logout',{method:'POST',headers:{Authorization:'Bearer '+S.customerToken}}); } catch(e){}
   }
   S.customer = null; S.customerToken = null;
   localStorage.removeItem('ctoken');
   updateNavAuth();
+  showPage('shop', document.getElementById('nav-shop'));
+  document.getElementById('nav-shop').classList.add('active');
   toast('Logged out');
 }
 
@@ -498,444 +543,444 @@ function renderShop() {
   if (!open) return;
   document.getElementById('batch-title').textContent = S.batch.title;
   document.getElementById('batch-desc').textContent = S.batch.desc;
-  document.getElementById('model-count').textContent = '(' + S.products.length + ' models)';
+  document.getElementById('model-count').textContent = '('+S.products.length+' models)';
   var emojis = ['🔵','🔴','🟡','🟠','🟢','⚪','🏎','🚗'];
-  var grid = document.getElementById('cars-grid');
-  grid.innerHTML = S.products.map(function(p,i){
-    var qty = S.cart[p.id] || 0;
-    var inCart = qty > 0;
-    var imgHtml = p.image ? '<img src="'+p.image+'" alt="'+p.name+'" onerror="this.parentNode.innerHTML=\''+emojis[i%emojis.length]+'\'"/>' : emojis[i%emojis.length];
-    return '<div class="car-card'+(inCart?' in-cart':'')+'" id="card-'+p.id+'">'
+  document.getElementById('cars-grid').innerHTML = S.products.map(function(p,i){
+    var qty = S.cart[p.id]||0, inCart = qty>0;
+    var imgHtml = p.image ? '<img src="'+p.image+'" alt="'+p.name+'" onerror="this.parentNode.innerHTML=\''+emojis[i%emojis.length]+'\'">' : emojis[i%emojis.length];
+    return '<div class="car-card'+(inCart?' in-cart':'')+'">'
       +'<div class="car-img">'+imgHtml+'</div>'
-      +'<div class="car-info">'
-      +'<div class="car-scale">MINI GT '+p.scale+'</div>'
-      +'<div class="car-name">'+p.name+'</div>'
-      +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div>'
-      +'</div>'
+      +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+'</div><div class="car-name">'+p.name+'</div>'
+      +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div></div>'
       +'<div class="car-qty">'
       +(inCart
-        ? '<div class="qty-ctrl">'
-          +'<button onclick="changeQty(\''+p.id+'\', -1)" '+(qty<=1?'':'')+'> − </button>'
-          +'<span>'+qty+'</span>'
-          +'<button onclick="changeQty(\''+p.id+'\', 1)"> + </button>'
-          +'</div>'
+        ? '<div class="qty-ctrl"><button onclick="changeQty(\''+p.id+'\',-1)">−</button><span>'+qty+'</span><button onclick="changeQty(\''+p.id+'\',1)">+</button></div>'
           +'<button class="add-btn" onclick="removeFromCart(\''+p.id+'\')">Remove</button>'
         : '<button class="add-btn" style="width:100%" onclick="addToCart(\''+p.id+'\')">+ Add to Order</button>'
-      )
-      +'</div>'
-      +'</div>';
+      )+'</div></div>';
   }).join('');
   updateCartFloat();
 }
 
-function addToCart(id) { S.cart[id] = 1; renderShop(); }
-function removeFromCart(id) { delete S.cart[id]; renderShop(); if(Object.keys(S.cart).length===0){closeOrderFlow();} }
-function changeQty(id, d) {
-  S.cart[id] = Math.max(1, (S.cart[id]||0)+d);
-  renderShop();
-}
-
-function cartTotal() {
-  var total = 0;
-  S.products.forEach(function(p){ if(S.cart[p.id]) total += p.price * S.cart[p.id]; });
-  return total;
-}
-function cartCount() { return Object.values(S.cart).reduce(function(a,b){return a+b;},0); }
+function addToCart(id){S.cart[id]=1;renderShop();}
+function removeFromCart(id){delete S.cart[id];renderShop();if(!Object.keys(S.cart).length)closeOrderFlow();}
+function changeQty(id,d){S.cart[id]=Math.max(1,(S.cart[id]||0)+d);renderShop();}
+function cartTotal(){return S.products.reduce(function(a,p){return a+(S.cart[p.id]?p.price*S.cart[p.id]:0);},0);}
+function cartCount(){return Object.values(S.cart).reduce(function(a,b){return a+b;},0);}
 
 function updateCartFloat() {
-  var count = cartCount(), total = cartTotal();
-  var fl = document.getElementById('cart-float');
-  fl.style.display = count > 0 ? 'block' : 'none';
-  document.getElementById('cart-badge-text').textContent = count + ' item' + (count!==1?'s':'') + ' · BND $' + total.toFixed(2);
+  var count=cartCount(),total=cartTotal();
+  document.getElementById('cart-float').style.display=count>0?'block':'none';
+  document.getElementById('cart-badge-text').textContent=count+' item'+(count!==1?'s':'')+' · BND $'+total.toFixed(2);
 }
 
 function openOrderFlow() {
   if (!S.customer) {
-    document.getElementById('login-prompt').style.display = '';
+    document.getElementById('login-prompt').style.display='';
     document.getElementById('login-prompt').scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  document.getElementById('order-flow').style.display = '';
-  document.getElementById('flow-step1').style.display = '';
-  document.getElementById('flow-success').style.display = 'none';
+  document.getElementById('order-flow').style.display='';
+  document.getElementById('flow-step1').style.display='';
+  document.getElementById('flow-success').style.display='none';
   renderFlowItems();
   document.getElementById('order-flow').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function closeOrderFlow() {
-  document.getElementById('order-flow').style.display = 'none';
-}
-
-function closeLoginPrompt() {
-  document.getElementById('login-prompt').style.display = 'none';
-}
-
-function goToAuth() {
-  closeLoginPrompt();
-  showPage('auth', null);
-  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
-}
+function closeOrderFlow(){document.getElementById('order-flow').style.display='none';}
+function closeLoginPrompt(){document.getElementById('login-prompt').style.display='none';}
+function goToAuth(){closeLoginPrompt();showPage('auth',null);document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));}
 
 function renderFlowItems() {
-  var items = '', total = 0;
+  var items='',total=0;
   S.products.forEach(function(p){
-    if(!S.cart[p.id]) return;
-    var sub = p.price * S.cart[p.id]; total += sub;
-    items += '<div class="order-item">'
-      +'<span class="name">'+p.name+'</span>'
-      +'<div class="qty-ctrl" style="transform:scale(0.9)">'
-      +'<button onclick="changeQty(\''+p.id+'\',-1)"> − </button>'
-      +'<span>'+S.cart[p.id]+'</span>'
-      +'<button onclick="changeQty(\''+p.id+'\',1)"> + </button>'
-      +'</div>'
-      +'<span class="subtotal">$'+sub.toFixed(2)+'</span>'
-      +'</div>';
+    if(!S.cart[p.id])return;
+    var sub=p.price*S.cart[p.id];total+=sub;
+    items+='<div class="order-item"><span class="name">'+p.name+'</span>'
+      +'<div class="qty-ctrl" style="transform:scale(.9)">'
+      +'<button onclick="changeQty(\''+p.id+'\',-1)">−</button><span>'+S.cart[p.id]+'</span><button onclick="changeQty(\''+p.id+'\',1)">+</button></div>'
+      +'<span class="subtotal">$'+sub.toFixed(2)+'</span></div>';
   });
-  document.getElementById('flow-items').innerHTML = items || '<div style="color:var(--muted);font-size:13px">No items</div>';
-  document.getElementById('flow-total').textContent = 'BND $'+total.toFixed(2);
-  document.getElementById('flow-customer-info').innerHTML =
-    '<strong>'+S.customer.name+'</strong><br>'
-    + S.customer.phone
-    + (S.customer.address ? '<br>'+S.customer.address : '');
+  document.getElementById('flow-items').innerHTML=items||'<div style="color:var(--muted);font-size:13px">No items</div>';
+  document.getElementById('flow-total').textContent='BND $'+total.toFixed(2);
+  document.getElementById('flow-customer-info').innerHTML=
+    '<strong>'+S.customer.firstName+' '+S.customer.lastName+'</strong><br>'+S.customer.phone;
 }
 
 async function submitOrder() {
-  var items = [];
-  S.products.forEach(function(p){ if(S.cart[p.id]) items.push({productId:p.id,name:p.name,qty:S.cart[p.id],price:p.price}); });
-  if(!items.length) { toast('No items selected'); return; }
-
-  var btn = event.target; btn.disabled=true; btn.textContent='Submitting...';
+  var items=[];
+  S.products.forEach(function(p){if(S.cart[p.id])items.push({productId:p.id,name:p.name,qty:S.cart[p.id],price:p.price});});
+  if(!items.length){toast('No items selected');return;}
+  var btn=event.target;btn.disabled=true;btn.textContent='Submitting...';
   try {
-    var r = await fetch(API+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.customerToken},body:JSON.stringify({items})});
-    var d = await r.json();
-    if(d.ref) {
-      document.getElementById('success-ref').textContent = 'Order Ref: '+d.ref;
-      document.getElementById('flow-step1').style.display = 'none';
-      document.getElementById('flow-success').style.display = '';
-      S.cart = {}; updateCartFloat();
-    } else { toast(d.error || 'Error submitting order'); }
-  } catch(e) {
-    var ref = 'MGT-'+Date.now().toString().slice(-6);
-    document.getElementById('success-ref').textContent = 'Order Ref: '+ref+' (Demo)';
-    document.getElementById('flow-step1').style.display = 'none';
-    document.getElementById('flow-success').style.display = '';
-    S.cart = {}; updateCartFloat();
-  }
-  btn.disabled=false; btn.textContent='🎉 Place Pre-Order';
+    var r=await fetch(API+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.customerToken},body:JSON.stringify({items})});
+    var d=await r.json();
+    if(d.ref){
+      document.getElementById('success-ref').textContent='Order Ref: '+d.ref;
+      document.getElementById('flow-step1').style.display='none';
+      document.getElementById('flow-success').style.display='';
+      S.cart={};updateCartFloat();
+    } else {toast(d.error||'Error submitting order');}
+  } catch(e){toast('Connection error. Please try again.');}
+  btn.disabled=false;btn.textContent='🎉 Place Pre-Order';
 }
 
-function resetAfterOrder() {
-  document.getElementById('order-flow').style.display = 'none';
-  renderShop();
-}
+function resetAfterOrder(){document.getElementById('order-flow').style.display='none';renderShop();}
 
-// Countdown
-function updateCountdown() {
-  if(!S.batch) return;
+function updateCountdown(){
+  if(!S.batch)return;
   var dl=new Date(S.batch.deadline),now=new Date(),diff=dl-now;
   if(diff<=0){document.getElementById('countdown').textContent='CLOSED';return;}
   var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
   document.getElementById('countdown').textContent=(d>0?d+'d ':'')+pad(h)+':'+pad(m)+':'+pad(s);
-  var opts={year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'};
-  document.getElementById('deadline-text').textContent=new Date(S.batch.deadline).toLocaleDateString('en-GB',opts);
+  document.getElementById('deadline-text').textContent=new Date(S.batch.deadline).toLocaleDateString('en-GB',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
 }
 function pad(n){return n<10?'0'+n:n;}
 
-// ── AUTH ──────────────────────────────────────────────────
-function switchAuthTab(tab) {
-  S.currentAuthTab = tab;
-  document.getElementById('tab-login').className = 'auth-tab'+(tab==='login'?' active':'');
-  document.getElementById('tab-register').className = 'auth-tab'+(tab==='register'?' active':'');
-  document.getElementById('auth-login').style.display = tab==='login'?'':'none';
-  document.getElementById('auth-register').style.display = tab==='register'?'':'none';
+// ── AUTH: LOGIN ───────────────────────────────────────────
+function switchAuthTab(tab){
+  S.currentAuthTab=tab;
+  document.getElementById('tab-login').className='tab-btn'+(tab==='login'?' active':'');
+  document.getElementById('tab-register').className='tab-btn'+(tab==='register'?' active':'');
+  document.getElementById('auth-login').style.display=tab==='login'?'':'none';
+  document.getElementById('auth-register').style.display=tab==='register'?'':'none';
 }
 
-// ── FIREBASE HELPERS ─────────────────────────────────────
-function setupRecaptcha(buttonId) {
-  if (window._fbRecaptchaVerifier) {
-    try { window._fbRecaptchaVerifier.clear(); } catch(e) {}
-  }
-  window._fbRecaptchaVerifier = new window.RecaptchaVerifier(window._fbAuth, 'recaptcha-container', {
-    size: 'invisible',
-    callback: function() {}
-  });
-}
-
-async function fbSendCode(phone) {
-  setupRecaptcha();
-  const result = await window.signInWithPhoneNumber(window._fbAuth, phone, window._fbRecaptchaVerifier);
-  window._fbConfirmationResult = result;
-}
-
-async function fbVerifyCode(code) {
-  if (!window._fbConfirmationResult) throw new Error('No confirmation result');
-  const result = await window._fbConfirmationResult.confirm(code);
-  const idToken = await result.user.getIdToken();
-  return { phone: result.user.phoneNumber, idToken };
-}
-
-// LOGIN
-async function loginSendCode() {
-  var ph = document.getElementById('login-phone').value.trim();
-  if(!ph) { showMsg('login-msg1','Phone required','error'); return; }
-  S.loginPhone = document.getElementById('login-code').value + ph;
-  var btn = document.getElementById('login-send-btn');
-  btn.disabled=true; btn.textContent='Sending...';
-  showMsg('login-msg1','','');
+async function doLogin(){
+  var ph=document.getElementById('login-phone').value.trim();
+  var cc=document.getElementById('login-cc').value;
+  var pw=document.getElementById('login-password').value;
+  if(!ph){showMsg('login-msg','Phone number required','error');return;}
+  if(!pw){showMsg('login-msg','Password required','error');return;}
+  var btn=event.target;btn.disabled=true;btn.textContent='Logging in...';
   try {
-    await fbSendCode(S.loginPhone);
-    document.getElementById('login-phone-display').textContent = S.loginPhone;
-    document.getElementById('login-step1').style.display='none';
-    document.getElementById('login-step2').style.display='';
-    showMsg('login-msg2','Code sent! Check your phone.','success');
-  } catch(e) {
-    console.error('Firebase send error:', e);
-    var msg = e.code === 'auth/invalid-phone-number' ? 'Invalid phone number format.'
-      : e.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.'
-      : e.code === 'auth/operation-not-allowed' ? 'Phone auth not enabled in Firebase.'
-      : 'Failed to send code: ' + (e.message || e.code);
-    showMsg('login-msg1', msg, 'error');
-    try { window._fbRecaptchaVerifier.clear(); } catch(x) {}
-    window._fbRecaptchaVerifier = null;
-  }
-  btn.disabled=false; btn.textContent='Send Code via SMS';
+    var r=await fetch(API+'/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:ph,countryCode:cc,password:pw})});
+    var d=await r.json();
+    if(d.success){onAuthSuccess(d.token,d.customer);}
+    else{showMsg('login-msg',d.error||'Login failed','error');}
+  } catch(e){showMsg('login-msg','Connection error. Please try again.','error');}
+  btn.disabled=false;btn.textContent='Login';
 }
 
-async function loginVerify() {
-  var code = document.getElementById('login-verify-code').value.trim();
-  if(!code) { showMsg('login-msg2','Enter the code','error'); return; }
-  var btn = event.target; btn.disabled=true; btn.textContent='Verifying...';
-  try {
-    var fb = await fbVerifyCode(code);
-    // Firebase verified — now login/register with backend using idToken
-    var r = await fetch(API+'/api/auth/firebase-login', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ idToken: fb.idToken, phone: fb.phone })
-    });
-    var d = await r.json();
-    if(d.success) { onAuthSuccess(d.token, d.customer); }
-    else { showMsg('login-msg2', d.error||'Account not found. Please register first.','error'); }
-  } catch(e) {
-    var msg = e.code === 'auth/invalid-verification-code' ? 'Incorrect code. Try again.'
-      : e.code === 'auth/code-expired' ? 'Code expired. Request a new one.'
-      : 'Verification failed: ' + (e.message || e.code);
-    showMsg('login-msg2', msg, 'error');
-  }
-  btn.disabled=false; btn.textContent='Verify';
-}
+// ── AUTH: REGISTER ────────────────────────────────────────
+async function regStep1(){
+  var first=document.getElementById('reg-first').value.trim();
+  var last=document.getElementById('reg-last').value.trim();
+  var ph=document.getElementById('reg-phone').value.trim();
+  var cc=document.getElementById('reg-cc').value;
+  var pw=document.getElementById('reg-password').value;
+  var pw2=document.getElementById('reg-password2').value;
+  if(!first){showMsg('reg-msg1','First name required','error');return;}
+  if(!last){showMsg('reg-msg1','Last name required','error');return;}
+  if(!ph){showMsg('reg-msg1','Phone number required','error');return;}
+  if(!pw||pw.length<6){showMsg('reg-msg1','Password must be at least 6 characters','error');return;}
+  if(pw!==pw2){showMsg('reg-msg1','Passwords do not match','error');return;}
+  S.regPhone = cc+ph;
+  S.regData = {firstName:first,lastName:last,phone:S.regPhone,password:pw};
 
-function loginBack() {
-  document.getElementById('login-step1').style.display='';
-  document.getElementById('login-step2').style.display='none';
-  document.getElementById('login-verify-code').value='';
-  window._fbConfirmationResult = null;
-}
-
-// REGISTER
-async function regSendCode() {
-  var name = document.getElementById('reg-name').value.trim();
-  var ph = document.getElementById('reg-phone').value.trim();
-  if(!name) { showMsg('reg-msg1','Please enter your name','error'); return; }
-  if(!ph) { showMsg('reg-msg1','Please enter your phone number','error'); return; }
-  S.regPhone = document.getElementById('reg-code').value + ph;
+  var btn=event.target;btn.disabled=true;btn.textContent='Sending code...';
   showMsg('reg-msg1','','');
   try {
-    await fbSendCode(S.regPhone);
+    // Setup invisible reCAPTCHA
+    if(window._fbRecaptchaVerifier){try{window._fbRecaptchaVerifier.clear();}catch(x){}}
+    window._fbRecaptchaVerifier = new window.RecaptchaVerifier(window._fbAuth,'recaptcha-container',{size:'invisible'});
+    var result = await window.signInWithPhoneNumber(window._fbAuth, S.regPhone, window._fbRecaptchaVerifier);
+    window._fbConfirmationResult = result;
     document.getElementById('reg-phone-display').textContent = S.regPhone;
     document.getElementById('reg-step1').style.display='none';
     document.getElementById('reg-step2').style.display='';
     showMsg('reg-msg2','Code sent! Check your phone.','success');
   } catch(e) {
-    console.error('Firebase send error:', e);
-    var msg = e.code === 'auth/invalid-phone-number' ? 'Invalid phone number format.'
-      : e.code === 'auth/too-many-requests' ? 'Too many attempts. Try again later.'
-      : 'Failed to send code: ' + (e.message || e.code);
-    showMsg('reg-msg1', msg, 'error');
-    try { window._fbRecaptchaVerifier.clear(); } catch(x) {}
-    window._fbRecaptchaVerifier = null;
+    var msg = e.code==='auth/invalid-phone-number'?'Invalid phone number.'
+      :e.code==='auth/too-many-requests'?'Too many attempts. Try again later.'
+      :e.code==='auth/billing-not-enabled'?'Firebase billing not enabled.'
+      :'Failed to send code: '+(e.message||e.code);
+    showMsg('reg-msg1',msg,'error');
+    try{window._fbRecaptchaVerifier.clear();}catch(x){}
+    window._fbRecaptchaVerifier=null;
   }
+  btn.disabled=false;btn.textContent='Send Verification Code';
 }
 
-async function regVerify() {
-  var code = document.getElementById('reg-verify-code').value.trim();
-  var name = document.getElementById('reg-name').value.trim();
-  var address = document.getElementById('reg-address').value.trim();
-  if(!code) { showMsg('reg-msg2','Enter the code','error'); return; }
-  var btn = event.target; btn.disabled=true; btn.textContent='Creating account...';
+async function regStep2(){
+  var code=document.getElementById('reg-code').value.trim();
+  if(!code){showMsg('reg-msg2','Enter the code','error');return;}
+  var btn=event.target;btn.disabled=true;btn.textContent='Creating account...';
   try {
-    var fb = await fbVerifyCode(code);
-    // Firebase verified — register with backend
-    var r = await fetch(API+'/api/auth/firebase-register', {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ idToken: fb.idToken, phone: fb.phone, name, address })
-    });
-    var d = await r.json();
-    if(d.success) { onAuthSuccess(d.token, d.customer); }
-    else { showMsg('reg-msg2', d.error||'Registration failed','error'); }
-  } catch(e) {
-    var msg = e.code === 'auth/invalid-verification-code' ? 'Incorrect code. Try again.'
-      : e.code === 'auth/code-expired' ? 'Code expired. Request a new one.'
-      : 'Verification failed: ' + (e.message || e.code);
-    showMsg('reg-msg2', msg, 'error');
+    var result = await window._fbConfirmationResult.confirm(code);
+    var idToken = await result.user.getIdToken();
+    var r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({idToken,phone:S.regData.phone,firstName:S.regData.firstName,lastName:S.regData.lastName,password:S.regData.password})});
+    var d=await r.json();
+    if(d.success){onAuthSuccess(d.token,d.customer);}
+    else{showMsg('reg-msg2',d.error||'Registration failed','error');}
+  } catch(e){
+    var msg=e.code==='auth/invalid-verification-code'?'Incorrect code. Try again.'
+      :e.code==='auth/code-expired'?'Code expired. Go back and resend.'
+      :'Error: '+(e.message||e.code);
+    showMsg('reg-msg2',msg,'error');
   }
-  btn.disabled=false; btn.textContent='Create Account';
+  btn.disabled=false;btn.textContent='Verify & Create';
 }
 
-function regBack() {
+function regBack(){
   document.getElementById('reg-step1').style.display='';
   document.getElementById('reg-step2').style.display='none';
-  document.getElementById('reg-verify-code').value='';
-  window._fbConfirmationResult = null;
+  document.getElementById('reg-code').value='';
+  window._fbConfirmationResult=null;
 }
 
-function onAuthSuccess(token, customer) {
-  S.customerToken = token;
-  S.customer = customer;
-  localStorage.setItem('ctoken', token);
+function onAuthSuccess(token,customer){
+  S.customerToken=token;S.customer=customer;
+  localStorage.setItem('ctoken',token);
   updateNavAuth();
-  toast('Welcome, ' + customer.name.split(' ')[0] + '! 👋');
-  showPage('shop', document.getElementById('nav-shop'));
+  toast('Welcome, '+customer.firstName+'! 👋');
+  showPage('shop',document.getElementById('nav-shop'));
   document.getElementById('nav-shop').classList.add('active');
 }
 
-function showMsg(id, msg, type) {
-  var el = document.getElementById(id);
-  el.textContent = msg;
-  el.className = 'msg ' + type;
+function showMsg(id,msg,type){
+  var el=document.getElementById(id);
+  el.textContent=msg;
+  el.className='msg'+(type?' '+type:'');
+}
+
+// ── HISTORY ───────────────────────────────────────────────
+async function loadHistory(){
+  document.getElementById('history-loading').style.display='';
+  document.getElementById('history-list').innerHTML='';
+  document.getElementById('history-empty').style.display='none';
+  try {
+    var r=await fetch(API+'/api/orders/my',{headers:{Authorization:'Bearer '+S.customerToken}});
+    var d=await r.json();
+    document.getElementById('history-loading').style.display='none';
+    if(!d.orders||!d.orders.length){document.getElementById('history-empty').style.display='';return;}
+    document.getElementById('history-list').innerHTML=d.orders.map(function(o){
+      var items=(o.items||[]).map(function(i){return '<div class="history-item"><span>'+i.name+' × '+i.qty+'</span><span>BND $'+(i.price*i.qty).toFixed(2)+'</span></div>';}).join('');
+      var total=(o.items||[]).reduce(function(a,i){return a+i.price*i.qty;},0);
+      return '<div class="history-card">'
+        +'<div class="history-batch">'+o.batchTitle+'</div>'
+        +'<div class="history-ref">'+o.ref+'</div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+new Date(o.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>'
+        +'<div class="history-items">'+items+'</div>'
+        +'<div class="history-total"><span>Total</span><span>BND $'+total.toFixed(2)+'</span></div>'
+        +'</div>';
+    }).join('');
+  } catch(e){document.getElementById('history-loading').style.display='none';document.getElementById('history-empty').style.display='';}
 }
 
 // ── ADMIN ──────────────────────────────────────────────────
-async function adminLogin() {
-  var pw = document.getElementById('admin-pw').value;
+async function adminLogin(){
+  var pw=document.getElementById('admin-pw').value;
   try {
-    var r = await fetch(API+'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
-    var d = await r.json();
-    if(d.token) { S.adminToken=d.token; showAdminPanel(); }
-    else { toast('Incorrect password'); }
-  } catch(e) {
-    if(pw==='admin123') { S.adminToken='demo'; showAdminPanel(); }
-    else { toast('Incorrect password'); }
-  }
+    var r=await fetch(API+'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
+    var d=await r.json();
+    if(d.token){S.adminToken=d.token;showAdminPanel();}
+    else{toast('Incorrect password');}
+  } catch(e){if(pw==='admin123'){S.adminToken='demo';showAdminPanel();}else{toast('Incorrect password');}}
 }
 
-async function showAdminPanel() {
+async function showAdminPanel(){
   document.getElementById('admin-login-wrap').style.display='none';
   document.getElementById('admin-panel').style.display='';
   await loadAdminData();
 }
 
-async function loadAdminData() {
+async function loadAdminData(){
   try {
-    var headers = {Authorization:'Bearer '+S.adminToken};
-    var [bR, oR, cR] = await Promise.all([
-      fetch(API+'/api/batch'),
-      fetch(API+'/api/admin/orders',{headers}),
-      fetch(API+'/api/admin/customers',{headers}),
-    ]);
-    var bd = await bR.json(); S.batch=bd.batch; S.products=bd.products;
-    var od = await oR.json(); S.orders=od.orders||[];
-    var cd = await cR.json(); S.adminCustomers=cd.customers||[];
-  } catch(e) { S.orders=[]; S.adminCustomers=[]; }
+    var h={Authorization:'Bearer '+S.adminToken};
+    var [bR,oR,cR]=await Promise.all([fetch(API+'/api/batch'),fetch(API+'/api/admin/orders',{headers:h}),fetch(API+'/api/admin/customers',{headers:h})]);
+    var bd=await bR.json();S.batch=bd.batch;S.products=bd.products;
+    var od=await oR.json();S.orders=od.orders||[];
+    var cd=await cR.json();S.adminCustomers=cd.customers||[];
+  } catch(e){S.orders=[];S.adminCustomers=[];}
   renderAdminPanel();
 }
 
-function renderAdminPanel() {
-  var b = S.batch||{};
-  var units = S.orders.reduce(function(a,o){return a+(o.items||[]).reduce(function(b,i){return b+i.qty;},0);},0);
-  document.getElementById('a-orders').textContent = S.orders.length;
-  document.getElementById('a-units').textContent = units;
-  document.getElementById('a-customers').textContent = S.adminCustomers.length;
-  document.getElementById('a-status').textContent = b.status==='open'?'🟢 Open':'🔴 Closed';
-  document.getElementById('a-deadline').textContent = b.deadline ? 'Until '+new Date(b.deadline).toLocaleDateString('en-GB') : '';
-  document.getElementById('a-title').value = b.title||'';
-  document.getElementById('a-desc').value = b.desc||'';
-  document.getElementById('a-deadline-input').value = b.deadline?b.deadline.slice(0,16):'';
-  document.getElementById('tog-open').className = 'toggle-btn'+(b.status==='open'?' active':'');
-  document.getElementById('tog-closed').className = 'toggle-btn'+(b.status==='closed'?' active':'');
-  renderAdminProducts();
-  renderAdminOrders();
+function renderAdminPanel(){
+  var b=S.batch||{};
+  var units=S.orders.reduce(function(a,o){return a+(o.items||[]).reduce(function(b,i){return b+i.qty;},0);},0);
+  document.getElementById('a-orders').textContent=S.orders.length;
+  document.getElementById('a-units').textContent=units;
+  document.getElementById('a-customers').textContent=S.adminCustomers.length;
+  document.getElementById('a-status').textContent=b.status==='open'?'🟢 Open':'🔴 Closed';
+  document.getElementById('a-title').value=b.title||'';
+  document.getElementById('a-desc').value=b.desc||'';
+  document.getElementById('a-deadline-input').value=b.deadline?b.deadline.slice(0,16):'';
+  document.getElementById('tog-open').className='toggle-btn'+(b.status==='open'?' active':'');
+  document.getElementById('tog-closed').className='toggle-btn'+(b.status==='closed'?' active':'');
+  renderAdminProducts();renderAdminOrders();renderAdminCustomers();
 }
 
-function renderAdminProducts() {
+function renderAdminProducts(){
   var emojis=['🔵','🔴','🟡','🟠','🟢','⚪'];
-  document.getElementById('a-products-list').innerHTML = S.products.map(function(p,i){
-    return '<div class="prod-row">'
-      +'<div class="prod-emoji">'+(p.image?'<img src="'+p.image+'" style="width:36px;height:30px;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent=\'🚗\'"/>':emojis[i%emojis.length])+'</div>'
-      +'<div class="prod-info"><div class="prod-name">'+p.name+'</div><div class="prod-meta">'+p.scale+' — BND $'+Number(p.price).toFixed(2)+'</div></div>'
-      +'<button class="btn btn-outline btn-sm" onclick="deleteProduct(\''+p.id+'\')">Remove</button>'
-      +'</div>';
+  document.getElementById('a-products-list').innerHTML=S.products.map(function(p,i){
+    var img=p.image?'<img src="'+p.image+'" style="width:32px;height:26px;object-fit:cover;border-radius:4px" onerror="this.parentNode.textContent=\'🚗\'"/>':emojis[i%emojis.length];
+    return '<div class="prod-row"><div class="prod-emoji">'+img+'</div><div class="prod-info"><div class="prod-name">'+p.name+'</div><div class="prod-meta">'+p.scale+' — BND $'+Number(p.price).toFixed(2)+'</div></div><button class="btn btn-outline btn-sm" onclick="deleteProduct(\''+p.id+'\')">Remove</button></div>';
   }).join('');
 }
 
-function renderAdminOrders() {
-  var tbody = document.getElementById('a-orders-table');
-  document.getElementById('a-no-orders').style.display = S.orders.length===0?'':'none';
-  tbody.innerHTML = S.orders.map(function(o){
+function renderAdminOrders(){
+  var tbody=document.getElementById('a-orders-table');
+  document.getElementById('a-no-orders').style.display=S.orders.length===0?'':'none';
+  tbody.innerHTML=S.orders.map(function(o){
     var mods=(o.items||[]).map(function(i){return i.name+'×'+i.qty;}).join(', ');
     var total=(o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
-    return '<tr><td style="font-weight:700;color:var(--red)">'+o.ref+'</td><td>'+o.name+'</td><td>'+o.phone+'</td>'
+    return '<tr><td style="font-weight:700;color:var(--red)">'+o.ref+'</td><td>'+o.customerName+'</td><td>'+o.phone+'</td><td style="font-size:11px;color:var(--muted)">'+o.batchTitle+'</td>'
       +'<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+mods+'">'+mods+'</td>'
       +'<td style="font-weight:600">$'+total.toFixed(2)+'</td>'
-      +'<td style="color:var(--muted);font-size:11px">'+new Date(o.createdAt||Date.now()).toLocaleDateString('en-GB')+'</td></tr>';
+      +'<td style="font-size:11px;color:var(--muted)">'+new Date(o.createdAt||Date.now()).toLocaleDateString('en-GB')+'</td></tr>';
   }).join('');
 }
 
-async function saveBatch() {
-  var payload={title:document.getElementById('a-title').value,desc:document.getElementById('a-desc').value,deadline:document.getElementById('a-deadline-input').value,status:S.batch.status};
-  try { await fetch(API+'/api/admin/batch',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify(payload)}); } catch(e){}
-  S.batch=Object.assign(S.batch,payload); renderShop(); toast('Saved!');
+function renderAdminCustomers(){
+  var tbody=document.getElementById('a-customers-table');
+  document.getElementById('a-no-customers').style.display=S.adminCustomers.length===0?'':'none';
+  tbody.innerHTML=S.adminCustomers.map(function(c){
+    return '<tr>'
+      +'<td style="font-weight:600">'+c.firstName+' '+c.lastName+'</td>'
+      +'<td>'+c.phone+'</td>'
+      +'<td><span class="badge badge-green">'+c.orderCount+' order'+(c.orderCount!==1?'s':'')+'</span></td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+new Date(c.createdAt).toLocaleDateString('en-GB')+'</td>'
+      +'<td><div style="display:flex;gap:4px">'
+      +'<button class="btn btn-outline btn-sm" onclick="viewCustomer(\''+c.phone+'\')">View</button>'
+      +'<button class="btn btn-outline btn-sm" onclick="openEditModal(\''+c.phone+'\')">Edit</button>'
+      +'</div></td>'
+      +'</tr>';
+  }).join('');
 }
 
-function setBatchStatus(s) {
+function viewCustomer(phone){
+  var c=S.adminCustomers.find(function(x){return x.phone===phone;});
+  if(!c)return;
+  document.getElementById('modal-title').textContent=c.firstName+' '+c.lastName;
+  var orders=c.orders||[];
+  var ordersHtml=orders.length===0?'<p style="color:var(--muted);font-size:13px">No orders yet.</p>'
+    :orders.map(function(o){
+      var total=(o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
+      var mods=(o.items||[]).map(function(i){return i.name+' ×'+i.qty;}).join('<br>');
+      return '<div style="background:var(--bg);border-radius:6px;padding:10px 12px;margin-bottom:8px">'
+        +'<div style="display:flex;justify-content:space-between;margin-bottom:4px">'
+        +'<span style="font-weight:700;color:var(--red);font-size:13px">'+o.ref+'</span>'
+        +'<span style="font-size:11px;color:var(--muted)">'+new Date(o.createdAt).toLocaleDateString('en-GB')+'</span></div>'
+        +'<div style="font-size:12px;color:var(--muted);margin-bottom:4px">'+o.batchTitle+'</div>'
+        +'<div style="font-size:12px">'+mods+'</div>'
+        +'<div style="font-weight:700;font-size:13px;margin-top:6px;text-align:right">BND $'+total.toFixed(2)+'</div>'
+        +'</div>';
+    }).join('');
+  document.getElementById('modal-body').innerHTML=
+    '<div style="font-size:13px;color:var(--muted);margin-bottom:14px">📱 '+c.phone+'<br>📅 Joined '+new Date(c.createdAt).toLocaleDateString('en-GB')+'</div>'
+    +'<div style="font-weight:700;font-size:13px;margin-bottom:8px">Orders ('+orders.length+')</div>'
+    +ordersHtml;
+  document.getElementById('customer-modal').classList.add('show');
+}
+
+function openEditModal(phone){
+  var c=S.adminCustomers.find(function(x){return x.phone===phone;});
+  if(!c)return;
+  document.getElementById('edit-phone').value=phone;
+  document.getElementById('edit-first').value=c.firstName;
+  document.getElementById('edit-last').value=c.lastName;
+  document.getElementById('edit-pw').value='';
+  showMsg('edit-msg','','');
+  document.getElementById('edit-modal').classList.add('show');
+}
+
+async function saveCustomer(){
+  var phone=document.getElementById('edit-phone').value;
+  var firstName=document.getElementById('edit-first').value.trim();
+  var lastName=document.getElementById('edit-last').value.trim();
+  var pw=document.getElementById('edit-pw').value;
+  if(!firstName||!lastName){showMsg('edit-msg','Name required','error');return;}
+  try {
+    await fetch(API+'/api/admin/customers/'+encodeURIComponent(phone),{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify({firstName,lastName})});
+    if(pw){
+      var r=await fetch(API+'/api/admin/customers/'+encodeURIComponent(phone)+'/reset-password',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify({newPassword:pw})});
+      var d=await r.json();
+      if(!d.success){showMsg('edit-msg',d.error||'Password update failed','error');return;}
+    }
+    toast('Customer updated!');
+    closeEditModal();
+    await loadAdminData();
+  } catch(e){showMsg('edit-msg','Error saving','error');}
+}
+
+async function deleteCustomer(){
+  var phone=document.getElementById('edit-phone').value;
+  if(!confirm('Delete this account? This cannot be undone.'))return;
+  try {
+    await fetch(API+'/api/admin/customers/'+encodeURIComponent(phone),{method:'DELETE',headers:{Authorization:'Bearer '+S.adminToken}});
+    toast('Customer deleted');
+    closeEditModal();
+    await loadAdminData();
+  } catch(e){toast('Error deleting customer');}
+}
+
+function closeModal(){document.getElementById('customer-modal').classList.remove('show');}
+function closeEditModal(){document.getElementById('edit-modal').classList.remove('show');}
+
+async function saveBatch(){
+  var payload={title:document.getElementById('a-title').value,desc:document.getElementById('a-desc').value,deadline:document.getElementById('a-deadline-input').value,status:S.batch.status};
+  try{await fetch(API+'/api/admin/batch',{method:'PUT',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify(payload)});}catch(e){}
+  S.batch=Object.assign(S.batch,payload);renderShop();toast('Saved!');
+}
+
+function setBatchStatus(s){
   S.batch.status=s;
   document.getElementById('tog-open').className='toggle-btn'+(s==='open'?' active':'');
   document.getElementById('tog-closed').className='toggle-btn'+(s==='closed'?' active':'');
 }
 
-async function addProduct() {
+async function addProduct(){
   var name=document.getElementById('a-prod-name').value.trim();
   var price=parseFloat(document.getElementById('a-prod-price').value);
   var scale=document.getElementById('a-prod-scale').value||'1:64';
   var image=document.getElementById('a-prod-img').value.trim();
   if(!name||isNaN(price)){toast('Fill in name and price');return;}
   var prod={id:'p'+Date.now(),name,scale,price,image,sort:S.products.length+1};
-  try { var r=await fetch(API+'/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify(prod)}); var d=await r.json(); if(d.id)prod.id=d.id; } catch(e){}
+  try{var r=await fetch(API+'/api/admin/products',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify(prod)});var d=await r.json();if(d.id)prod.id=d.id;}catch(e){}
   S.products.push(prod);
   ['a-prod-name','a-prod-price','a-prod-img'].forEach(function(id){document.getElementById(id).value='';});
-  renderAdminProducts(); renderShop(); toast('Model added!');
+  renderAdminProducts();renderShop();toast('Model added!');
 }
 
-async function deleteProduct(id) {
-  try { await fetch(API+'/api/admin/products/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+S.adminToken}}); } catch(e){}
+async function deleteProduct(id){
+  try{await fetch(API+'/api/admin/products/'+id,{method:'DELETE',headers:{Authorization:'Bearer '+S.adminToken}});}catch(e){}
   S.products=S.products.filter(function(p){return p.id!==id;});
-  delete S.cart[id]; renderAdminProducts(); renderShop(); toast('Removed');
+  delete S.cart[id];renderAdminProducts();renderShop();toast('Removed');
 }
 
-function exportCSV() {
-  var rows=[['Ref','Name','Phone','Address','Models','Total BND','Date']];
+function exportCSV(){
+  var rows=[['Ref','Name','Phone','Batch','Models','Total BND','Date']];
   S.orders.forEach(function(o){
     var mods=(o.items||[]).map(function(i){return i.name+' x'+i.qty;}).join('; ');
     var total=(o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
-    rows.push([o.ref,o.name,o.phone,o.address||'',mods,total.toFixed(2),new Date(o.createdAt||Date.now()).toLocaleDateString('en-GB')]);
+    rows.push([o.ref,o.customerName,o.phone,o.batchTitle,mods,total.toFixed(2),new Date(o.createdAt||Date.now()).toLocaleDateString('en-GB')]);
   });
   var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
-  var a=document.createElement('a'); a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='minigt-orders-'+new Date().toISOString().slice(0,10)+'.csv'; a.click();
-  toast('Exported!');
+  var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='minigt-orders-'+new Date().toISOString().slice(0,10)+'.csv';a.click();toast('Exported!');
+}
+
+function switchAdminTab(tab,el){
+  ['batch','products','orders','customers'].forEach(function(t){
+    document.getElementById('atab-'+t).style.display=t===tab?'':'none';
+  });
+  document.querySelectorAll('.admin-tab').forEach(function(b){b.classList.remove('active');});
+  if(el)el.classList.add('active');
 }
 
 function adminLogout(){S.adminToken=null;document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none';}
 
-// ── NAVIGATION ────────────────────────────────────────────
-function showPage(p, activeEl) {
+// ── NAV ────────────────────────────────────────────────────
+function showPage(p,activeEl){
   document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
   document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});
   document.getElementById('page-'+p).classList.add('active');
-  if(activeEl) activeEl.classList.add('active');
+  if(activeEl)activeEl.classList.add('active');
   if(p==='admin'&&!S.adminToken){document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none';}
-  if(p==='auth') switchAuthTab(S.currentAuthTab);
+  if(p==='auth')switchAuthTab(S.currentAuthTab);
+  if(p==='history'){if(S.customer)loadHistory();else{showPage('auth',null);}}
 }
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2600);}
