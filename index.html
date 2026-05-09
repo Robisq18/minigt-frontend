@@ -27,10 +27,17 @@
     window._fbReady = true;
     // Expose Firebase functions globally
     window._fbSendCode = async function(phone) {
-      // Always clear old verifier first
+      // Clear old verifier
       if (window._fbRecaptchaVerifier) {
         try { window._fbRecaptchaVerifier.clear(); } catch(e) {}
         window._fbRecaptchaVerifier = null;
+      }
+      // Destroy and recreate the container so reCAPTCHA renders fresh every time
+      var oldEl = document.getElementById('recaptcha-container');
+      if (oldEl) {
+        var newEl = document.createElement('div');
+        newEl.id = 'recaptcha-container';
+        oldEl.parentNode.replaceChild(newEl, oldEl);
       }
       window._fbRecaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         size: 'invisible',
