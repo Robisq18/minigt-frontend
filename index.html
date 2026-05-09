@@ -1005,19 +1005,12 @@ async function selectAdminBatch(batchId){
   S.selectedAdminBatchId=batchId;
   renderAdminBatches();
   try{
-    // Fetch batch info and products in parallel
-    var [batchRes, prodRes] = await Promise.all([
-      fetch(API+'/api/admin/batches/'+batchId,{headers:{Authorization:'Bearer '+S.adminToken}}),
-      fetch(API+'/api/admin/batches/'+batchId+'/products?t='+Date.now(),{headers:{Authorization:'Bearer '+S.adminToken,'Cache-Control':'no-cache'}})
-    ]);
-    var batchData = await batchRes.json();
-    var prodData = await prodRes.json();
-    var batch = batchData.batch;
-    var products = prodData.products||[];
+    // Get batch from local state (already loaded) + fetch products fresh
+    var batch = S.adminBatches.find(function(b){return b.id===batchId;});
     if(!batch){toast('Batch not found');return;}
-    // Update S.adminBatches with fresh data
-    var idx = S.adminBatches.findIndex(function(b){return b.id===batchId;});
-    if(idx>=0) S.adminBatches[idx]=Object.assign(S.adminBatches[idx],batch);
+    var prodRes = await fetch(API+'/api/admin/batches/'+batchId+'/products?t='+Date.now(),{headers:{Authorization:'Bearer '+S.adminToken,'Cache-Control':'no-cache'}});
+    var prodData = await prodRes.json();
+    var products = prodData.products||[];
     renderBatchDetail(batch,products);
   }catch(e){
     console.error('Error loading batch:',e);
