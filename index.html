@@ -23,9 +23,29 @@
     auth.languageCode = 'en';
     window._fbAuth = auth;
     window._fbConfirmationResult = null;
-    window.RecaptchaVerifier = RecaptchaVerifier;
-    window.signInWithPhoneNumber = signInWithPhoneNumber;
-    document.dispatchEvent(new Event('firebaseReady'));
+    window._fbRecaptchaVerifier = null;
+    window._fbReady = true;
+    // Expose Firebase functions globally
+    window._fbSendCode = async function(phone) {
+      // Always clear old verifier first
+      if (window._fbRecaptchaVerifier) {
+        try { window._fbRecaptchaVerifier.clear(); } catch(e) {}
+        window._fbRecaptchaVerifier = null;
+      }
+      window._fbRecaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+        size: 'invisible',
+        callback: () => {}
+      });
+      const result = await signInWithPhoneNumber(auth, phone, window._fbRecaptchaVerifier);
+      window._fbConfirmationResult = result;
+      return result;
+    };
+    window._fbVerifyCode = async function(code) {
+      if (!window._fbConfirmationResult) throw new Error('No confirmation result. Please resend code.');
+      const result = await window._fbConfirmationResult.confirm(code);
+      const idToken = await result.user.getIdToken();
+      return { phone: result.user.phoneNumber, idToken };
+    };
   </script>
 
   <style>
@@ -316,12 +336,15 @@
           <p style="font-size:13px;color:var(--muted);margin-bottom:14px">Enter the 6-digit code sent to <strong id="reg-phone-display"></strong></p>
           <div class="field"><label>Verification Code</label>
             <div class="code-row">
-              <input type="text" id="reg-code" placeholder="123456" maxlength="6">
+              <input type="text" id="reg-code" placeholder="123456" maxlength="6" onkeydown="if(event.key==='Enter')regStep2()">
               <button class="btn btn-red" onclick="regStep2()">Verify & Create</button>
             </div>
           </div>
           <div id="reg-msg2" class="msg"></div>
-          <button class="btn btn-outline btn-sm" onclick="regBack()" style="margin-top:8px">← Change details</button>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px">
+            <button class="btn btn-outline btn-sm" onclick="regBack()">← Change details</button>
+            <button class="btn btn-outline btn-sm" id="resend-btn" onclick="resendCode()" disabled>Resend in 60s</button>
+          </div>
         </div>
       </div>
     </div>
@@ -675,31 +698,65 @@ async function regStep1(){
   if(!ph){showMsg('reg-msg1','Phone number required','error');return;}
   if(!pw||pw.length<6){showMsg('reg-msg1','Password must be at least 6 characters','error');return;}
   if(pw!==pw2){showMsg('reg-msg1','Passwords do not match','error');return;}
+  if(!window._fbReady){showMsg('reg-msg1','Firebase not loaded yet. Please wait a moment and try again.','error');return;}
   S.regPhone = cc+ph;
   S.regData = {firstName:first,lastName:last,phone:S.regPhone,password:pw};
-
-  var btn=event.target;btn.disabled=true;btn.textContent='Sending code...';
-  showMsg('reg-msg1','','');
-  try {
-    // Setup invisible reCAPTCHA
-    if(window._fbRecaptchaVerifier){try{window._fbRecaptchaVerifier.clear();}catch(x){}}
-    window._fbRecaptchaVerifier = new window.RecaptchaVerifier(window._fbAuth,'recaptcha-container',{size:'invisible'});
-    var result = await window.signInWithPhoneNumber(window._fbAuth, S.regPhone, window._fbRecaptchaVerifier);
-    window._fbConfirmationResult = result;
+  await sendFirebaseCode(S.regPhone, 'reg-msg1', function(){
     document.getElementById('reg-phone-display').textContent = S.regPhone;
     document.getElementById('reg-step1').style.display='none';
     document.getElementById('reg-step2').style.display='';
-    showMsg('reg-msg2','Code sent! Check your phone.','success');
+    showMsg('reg-msg2','Code sent to '+S.regPhone+' — check your SMS.','success');
+    startResendTimer();
+  });
+}
+
+// Shared Firebase send code function
+async function sendFirebaseCode(phone, msgId, onSuccess) {
+  var sendBtn = document.getElementById('reg-send-btn') || event && event.target;
+  if(sendBtn){sendBtn.disabled=true;sendBtn.textContent='Sending...';}
+  showMsg(msgId,'','');
+  try {
+    await window._fbSendCode(phone);
+    if(onSuccess) onSuccess();
   } catch(e) {
-    var msg = e.code==='auth/invalid-phone-number'?'Invalid phone number.'
-      :e.code==='auth/too-many-requests'?'Too many attempts. Try again later.'
-      :e.code==='auth/billing-not-enabled'?'Firebase billing not enabled.'
-      :'Failed to send code: '+(e.message||e.code);
-    showMsg('reg-msg1',msg,'error');
-    try{window._fbRecaptchaVerifier.clear();}catch(x){}
-    window._fbRecaptchaVerifier=null;
+    console.error('Firebase error:', e.code, e.message);
+    var msg = e.code==='auth/invalid-phone-number'?'Invalid phone number format. Use international format e.g. +6738882225'
+      :e.code==='auth/too-many-requests'?'Too many attempts. Please wait before trying again.'
+      :e.code==='auth/billing-not-enabled'?'Firebase billing not enabled — contact admin.'
+      :e.code==='auth/captcha-check-failed'?'Captcha failed. Please refresh and try again.'
+      :e.code==='auth/network-request-failed'?'Network error. Check your connection.'
+      :'Failed to send code: '+(e.message||e.code||'Unknown error');
+    showMsg(msgId, msg, 'error');
   }
-  btn.disabled=false;btn.textContent='Send Verification Code';
+  if(sendBtn){sendBtn.disabled=false;sendBtn.textContent='Send Verification Code';}
+}
+
+// Resend timer
+var _resendTimer = null;
+function startResendTimer() {
+  var seconds = 60;
+  var btn = document.getElementById('resend-btn');
+  if(!btn) return;
+  btn.disabled = true;
+  btn.textContent = 'Resend in '+seconds+'s';
+  clearInterval(_resendTimer);
+  _resendTimer = setInterval(function(){
+    seconds--;
+    if(seconds<=0){
+      clearInterval(_resendTimer);
+      btn.disabled=false;
+      btn.textContent='Resend Code';
+    } else {
+      btn.textContent='Resend in '+seconds+'s';
+    }
+  }, 1000);
+}
+
+async function resendCode(){
+  await sendFirebaseCode(S.regPhone, 'reg-msg2', function(){
+    showMsg('reg-msg2','New code sent to '+S.regPhone,'success');
+    startResendTimer();
+  });
 }
 
 async function regStep2(){
@@ -707,17 +764,19 @@ async function regStep2(){
   if(!code){showMsg('reg-msg2','Enter the code','error');return;}
   var btn=event.target;btn.disabled=true;btn.textContent='Creating account...';
   try {
-    var result = await window._fbConfirmationResult.confirm(code);
-    var idToken = await result.user.getIdToken();
+    var fb = await window._fbVerifyCode(code);
     var r=await fetch(API+'/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({idToken,phone:S.regData.phone,firstName:S.regData.firstName,lastName:S.regData.lastName,password:S.regData.password})});
+      body:JSON.stringify({idToken:fb.idToken,phone:S.regData.phone,firstName:S.regData.firstName,lastName:S.regData.lastName,password:S.regData.password})});
     var d=await r.json();
-    if(d.success){onAuthSuccess(d.token,d.customer);}
-    else{showMsg('reg-msg2',d.error||'Registration failed','error');}
+    if(d.success){
+      clearInterval(_resendTimer);
+      onAuthSuccess(d.token,d.customer);
+    } else{showMsg('reg-msg2',d.error||'Registration failed','error');}
   } catch(e){
+    console.error('Verify error:', e.code, e.message);
     var msg=e.code==='auth/invalid-verification-code'?'Incorrect code. Try again.'
-      :e.code==='auth/code-expired'?'Code expired. Go back and resend.'
-      :'Error: '+(e.message||e.code);
+      :e.code==='auth/code-expired'?'Code expired. Click Resend Code.'
+      :e.message||e.code||'Verification failed';
     showMsg('reg-msg2',msg,'error');
   }
   btn.disabled=false;btn.textContent='Verify & Create';
