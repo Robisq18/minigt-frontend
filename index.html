@@ -610,14 +610,24 @@ async function loadBatches() {
 
   if (S.allBatches.length === 0) {
     document.getElementById('shop-empty').style.display = '';
+    document.getElementById('shop-content').style.display = 'none';
     return;
   }
 
-  // Populate dropdown if 5+ batches
+  // Populate dropdown
   populateBatchDropdown();
 
-  // Default: show active batch, or most recent if all closed
-  // Show most recent active batch by default, or most recent overall
+  // If a batch is already selected and still exists, keep it selected
+  var keepBatch = S.currentBatch && S.allBatches.find(function(b){ return b.id === S.currentBatch.id; });
+  if(keepBatch) {
+    // Just refresh the dropdown selection and re-render
+    var dd = document.getElementById('batch-dropdown');
+    if(dd) dd.value = S.currentBatch.id;
+    await selectBatch(S.currentBatch.id);
+    return;
+  }
+
+  // Default: show most recent active batch, or most recent overall
   var activeBatches = S.allBatches.filter(function(b){ return b.status === 'active'; });
   var defaultBatch = activeBatches[0] || S.allBatches[0];
   await selectBatch(defaultBatch.id);
@@ -626,24 +636,22 @@ async function loadBatches() {
 function populateBatchDropdown() {
   var wrap = document.getElementById('batch-selector-wrap');
   var sel = document.getElementById('batch-dropdown');
-  if (S.allBatches.length >= 5) {
-    // Sort: active first, then closed by date
+  // Sort: active first, then by date
   var sorted = S.allBatches.slice().sort(function(a,b){
     if(a.status===b.status) return new Date(b.createdAt)-new Date(a.createdAt);
     return a.status==='active'?-1:1;
   });
   sel.innerHTML = sorted.map(function(b){
-    var label = b.ref + ' — ' + b.title + (b.status === 'closed' ? ' (Closed)' : ' (Active)');
+    var label = b.ref + ' — ' + b.title + (b.status === 'closed' ? ' (Closed)' : '');
     return '<option value="'+b.id+'">'+label+'</option>';
   }).join('');
-    wrap.style.display = '';
-  } else {
-    wrap.style.display = 'none';
-  }
+  // Show dropdown whenever there are 2+ batches (was 5+)
+  wrap.style.display = S.allBatches.length >= 2 ? '' : 'none';
 }
 
 async function selectBatch(batchId) {
-  document.getElementById('batch-dropdown').value = batchId;
+  var dd = document.getElementById('batch-dropdown');
+  if(dd) dd.value = batchId;
   try {
     var r = await fetch(API+'/api/batches/'+batchId);
     var d = await r.json();
@@ -1359,6 +1367,7 @@ function showPage(p,activeEl){
   if(activeEl)activeEl.classList.add('active');
   if(p==='admin'&&!S.adminToken){document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none';}
   if(p==='auth')switchAuthTab(S.currentAuthTab);
+  if(p==='shop') loadBatches();
   if(p==='history'){if(S.customer)loadHistory();else showPage('auth',null);}
   if(p==='account'){if(S.customer)loadAccount();else showPage('auth',null);}
 }
