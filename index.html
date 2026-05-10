@@ -136,6 +136,26 @@
     .add-btn{flex:1;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:6px 8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font-body);transition:background .15s;text-align:center}
     .add-btn:hover,.car-card.in-cart .add-btn{background:var(--red);color:#fff}
     .closed-label{width:100%;text-align:center;padding:8px;font-size:12px;color:var(--muted);border-top:0.5px solid var(--border);margin-top:6px}
+    /* BATCH CARDS */
+    .batch-card{background:var(--surface);border-radius:12px;border:0.5px solid var(--border);margin-bottom:14px;overflow:hidden;transition:box-shadow .15s}
+    .batch-card:hover{box-shadow:0 2px 12px rgba(0,0,0,0.07)}
+    .batch-card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;gap:12px}
+    .batch-card-header:hover{background:rgba(0,0,0,0.02)}
+    .batch-card.active-card .batch-card-header{background:var(--red);color:#fff}
+    .batch-card.active-card .batch-card-header:hover{background:var(--red-dark)}
+    .batch-card-left{flex:1;min-width:0}
+    .batch-card-ref{font-size:11px;font-weight:700;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+    .batch-card-title{font-family:var(--font-head);font-size:20px;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .batch-card-meta{font-size:12px;opacity:.75;margin-top:2px}
+    .batch-card-right{display:flex;align-items:center;gap:10px;flex-shrink:0}
+    .batch-card-body{display:none;border-top:0.5px solid var(--border)}
+    .batch-card-body.open{display:block}
+    .batch-card-body-inner{padding:20px}
+    .batch-chevron{font-size:16px;transition:transform .2s;opacity:.6}
+    .batch-card-body.open ~ * .batch-chevron,
+    .batch-card-header[aria-expanded=true] .batch-chevron{transform:rotate(180deg)}
+    .chevron-open{transform:rotate(180deg)}
+
     /* CART FLOAT */
     .cart-float{position:sticky;bottom:16px;text-align:center;padding-top:12px;display:none}
     .cart-float-btn{background:var(--red);color:#fff;border:none;padding:12px 28px;border-radius:30px;font-size:15px;font-weight:600;cursor:pointer;font-family:var(--font-body);box-shadow:0 4px 20px rgba(192,39,45,0.35);display:inline-flex;align-items:center;gap:10px}
@@ -227,27 +247,18 @@
   <div id="shop-loading" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">Loading batches...</div>
 
   <div id="shop-content" style="display:none">
-    <!-- Batch dropdown (shows when 5+ batches) -->
-    <div class="batch-selector" id="batch-selector-wrap" style="display:none">
-      <select id="batch-dropdown" onchange="selectBatch(this.value)"></select>
-    </div>
+    <!-- Batch Cards (first 5 shown as expandable cards) -->
+    <div id="batch-cards-list"></div>
 
-    <!-- Batch Banner -->
-    <div class="batch-banner" id="shop-banner">
-      <div>
-        <div class="batch-ref" id="shop-batch-ref"></div>
-        <h2 id="shop-batch-title"></h2>
-        <p id="shop-batch-desc"></p>
+    <!-- Older batches dropdown (6th batch onwards) -->
+    <div id="older-batches-wrap" style="display:none;margin-bottom:20px">
+      <div style="border-top:0.5px solid var(--border);padding-top:16px">
+        <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">Older Batches</div>
+        <select id="older-batches-dropdown" onchange="expandBatch(this.value)" style="width:100%;border:0.5px solid var(--border);border-radius:8px;padding:10px 14px;font-size:14px;font-family:var(--font-body);background:var(--surface);color:var(--text);outline:none">
+          <option value="">— Select a batch to view —</option>
+        </select>
       </div>
-      <div id="shop-banner-right"></div>
     </div>
-
-    <!-- Products -->
-    <div class="section-title">
-      <span id="shop-section-label">Available Models</span>
-      <span id="model-count" style="font-size:13px;font-family:var(--font-body);font-weight:400;color:var(--muted)"></span>
-    </div>
-    <div class="cars-grid" id="cars-grid"></div>
 
     <!-- ORDER FLOW -->
     <div id="order-flow" style="display:none">
@@ -614,114 +625,246 @@ async function loadBatches() {
     return;
   }
 
-  // Populate dropdown
-  populateBatchDropdown();
-
-  // If a batch is already selected and still exists, keep it selected
-  var keepBatch = S.currentBatch && S.allBatches.find(function(b){ return b.id === S.currentBatch.id; });
-  if(keepBatch) {
-    // Just refresh the dropdown selection and re-render
-    var dd = document.getElementById('batch-dropdown');
-    if(dd) dd.value = S.currentBatch.id;
-    await selectBatch(S.currentBatch.id);
-    return;
-  }
-
-  // Default: show most recent active batch, or most recent overall
-  var activeBatches = S.allBatches.filter(function(b){ return b.status === 'active'; });
-  var defaultBatch = activeBatches[0] || S.allBatches[0];
-  await selectBatch(defaultBatch.id);
+  document.getElementById('shop-content').style.display = '';
+  document.getElementById('shop-empty').style.display = 'none';
+  renderBatchCards();
 }
 
-function populateBatchDropdown() {
-  var wrap = document.getElementById('batch-selector-wrap');
-  var sel = document.getElementById('batch-dropdown');
-  // Sort: active first, then by date
+function renderBatchCards() {
+  // Sort: active first, then by date newest first
   var sorted = S.allBatches.slice().sort(function(a,b){
     if(a.status===b.status) return new Date(b.createdAt)-new Date(a.createdAt);
     return a.status==='active'?-1:1;
   });
-  sel.innerHTML = sorted.map(function(b){
-    var label = b.ref + ' — ' + b.title + (b.status === 'closed' ? ' (Closed)' : '');
-    return '<option value="'+b.id+'">'+label+'</option>';
+
+  var first5 = sorted.slice(0,5);
+  var older  = sorted.slice(5);
+
+  // Render first 5 as cards
+  var container = document.getElementById('batch-cards-list');
+  container.innerHTML = first5.map(function(b, i){
+    var isActive = b.status==='active';
+    // Expand the first (latest active) by default, rest collapsed
+    var expanded = i===0;
+    return '<div class="batch-card'+(isActive?' active-card':'')+'" id="bcard-'+b.id+'">'
+      +'<div class="batch-card-header" onclick="toggleBatchCard(''+b.id+'')">'
+      +'<div class="batch-card-left">'
+      +'<div class="batch-card-ref">'+b.ref+(isActive?' · Active':' · Closed')+'</div>'
+      +'<div class="batch-card-title">'+b.title+'</div>'
+      +'<div class="batch-card-meta">'+(b.deadline?'Deadline: '+new Date(b.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+' · ':'')+b.productCount+' model'+(b.productCount!==1?'s':'')+'</div>'
+      +'</div>'
+      +'<div class="batch-card-right">'
+      +(isActive?'<span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600">Open</span>':'<span class="status-pill status-closed">Closed</span>')
+      +'<span class="batch-chevron'+(expanded?' chevron-open':'')+'" id="chevron-'+b.id+'">▼</span>'
+      +'</div>'
+      +'</div>'
+      +'<div class="batch-card-body'+(expanded?' open':'')+'" id="bbody-'+b.id+'">'
+      +'<div class="batch-card-body-inner" id="binner-'+b.id+'">'
+      +(expanded?'<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px">Loading...</div>':'')
+      +'</div>'
+      +'</div>'
+      +'</div>';
   }).join('');
-  // Show dropdown whenever there are 2+ batches (was 5+)
-  wrap.style.display = S.allBatches.length >= 2 ? '' : 'none';
+
+  // Older batches dropdown
+  var olderWrap = document.getElementById('older-batches-wrap');
+  if(older.length > 0){
+    olderWrap.style.display='';
+    var sel = document.getElementById('older-batches-dropdown');
+    sel.innerHTML = '<option value="">— Select a batch to view —</option>'
+      + older.map(function(b){
+          return '<option value="'+b.id+'">'+b.ref+' — '+b.title+(b.status==='closed'?' (Closed)':'')+'</option>';
+        }).join('');
+  } else {
+    olderWrap.style.display='none';
+  }
+
+  // Auto-load products for first expanded batch
+  if(first5.length > 0){
+    loadBatchProducts(first5[0].id);
+  }
 }
 
-async function selectBatch(batchId) {
-  var dd = document.getElementById('batch-dropdown');
-  if(dd) dd.value = batchId;
-  try {
+async function toggleBatchCard(batchId){
+  var body = document.getElementById('bbody-'+batchId);
+  var chevron = document.getElementById('chevron-'+batchId);
+  if(!body) return;
+
+  var isOpen = body.classList.contains('open');
+  if(isOpen){
+    body.classList.remove('open');
+    if(chevron) chevron.classList.remove('chevron-open');
+    // Clear cart if this was the active batch
+    if(S.currentBatch && S.currentBatch.id===batchId){
+      S.cart={};updateCartFloat();
+      closeOrderFlow();
+    }
+  } else {
+    body.classList.add('open');
+    if(chevron) chevron.classList.add('chevron-open');
+    await loadBatchProducts(batchId);
+  }
+}
+
+async function expandBatch(batchId){
+  if(!batchId) return;
+  // Load and show this older batch in a modal-like expanded view below dropdown
+  try{
     var r = await fetch(API+'/api/batches/'+batchId);
     var d = await r.json();
     S.currentBatch = d.batch;
     S.currentProducts = d.products;
-  } catch(e) { return; }
-  S.cart = {};
-  closeOrderFlow();
-  document.getElementById('login-prompt').style.display = 'none';
-  document.getElementById('shop-content').style.display = '';
-  document.getElementById('shop-empty').style.display = 'none';
-  renderBatch();
+    S.cart = {};
+  } catch(e){ toast('Error loading batch'); return; }
+
+  // Show the batch in an expanded section below the dropdown
+  var olderWrap = document.getElementById('older-batches-wrap');
+  // Remove any existing expanded older batch
+  var existing = document.getElementById('older-expanded');
+  if(existing) existing.remove();
+
+  var div = document.createElement('div');
+  div.id = 'older-expanded';
+  div.style.marginTop = '16px';
+  div.innerHTML = renderBatchInnerHTML(S.currentBatch, S.currentProducts);
+  olderWrap.appendChild(div);
+  div.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
-function renderBatch() {
-  var b = S.currentBatch;
-  var isActive = b.status === 'active';
-  var banner = document.getElementById('shop-banner');
-  banner.className = 'batch-banner ' + (isActive ? 'active' : 'closed');
-  document.getElementById('shop-batch-ref').textContent = b.ref;
-  document.getElementById('shop-batch-title').textContent = b.title;
-  document.getElementById('shop-batch-desc').textContent = b.desc || '';
-  document.getElementById('shop-section-label').textContent = isActive ? 'Available Models' : 'Models in this Batch';
+async function loadBatchProducts(batchId){
+  var inner = document.getElementById('binner-'+batchId);
+  if(!inner) return;
 
-  if (isActive) {
-    document.getElementById('shop-banner-right').innerHTML =
-      '<div class="deadline-box"><div class="label">Closes in</div><div class="countdown" id="countdown">--:--:--</div><div style="font-size:10px;opacity:.6;margin-top:2px" id="deadline-text"></div></div>';
-    updateCountdown();
-  } else {
-    document.getElementById('shop-banner-right').innerHTML =
-      '<div class="closed-pill">🔒 Closed</div>';
-    document.getElementById('model-count').textContent = '';
+  try{
+    var r = await fetch(API+'/api/batches/'+batchId);
+    var d = await r.json();
+    var batch = d.batch;
+    var products = d.products;
+
+    // Set as current batch when loading
+    if(!S.currentBatch || S.currentBatch.id===batchId){
+      S.currentBatch = batch;
+      S.currentProducts = products;
+    }
+
+    inner.innerHTML = renderBatchInnerHTML(batch, products);
+    updateCartFloat();
+  } catch(e){
+    if(inner) inner.innerHTML='<div style="color:var(--muted);font-size:13px;padding:16px;text-align:center">Error loading products.</div>';
+  }
+}
+
+function renderBatchInnerHTML(batch, products){
+  var isActive = batch.status==='active';
+  var emojis = ['🔵','🔴','🟡','🟠','🟢','⚪','🏎','🚗'];
+
+  // Countdown for active batch
+  var countdownHtml = '';
+  if(isActive && batch.deadline){
+    var diff = new Date(batch.deadline)-new Date();
+    if(diff>0){
+      var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+      countdownHtml='<div style="background:rgba(0,0,0,0.1);border-radius:8px;padding:8px 14px;text-align:center;margin-bottom:16px">'
+        +'<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Closes in</div>'
+        +'<div style="font-family:var(--font-head);font-size:22px;letter-spacing:2px" id="cd-'+batch.id+'">'+pad(h)+':'+pad(m)+':'+pad(s)+'</div>'
+        +'<div style="font-size:10px;opacity:.6;margin-top:2px">'+new Date(batch.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>'
+        +'</div>';
+    }
   }
 
-  renderProducts();
+  var closedBanner = !isActive
+    ? '<div style="background:#F3F4F6;border-radius:8px;padding:10px 14px;text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600">🔒 This batch is closed — no longer accepting orders</div>'
+    : '';
+
+  var productsHtml = '';
+  if(!products || !products.length){
+    productsHtml = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No products in this batch yet.</div>';
+  } else {
+    productsHtml = '<div class="cars-grid">'
+      + products.map(function(p,i){
+          var qty = (S.currentBatch && S.currentBatch.id===batch.id) ? (S.cart[p.id]||0) : 0;
+          var inCart = qty>0;
+          var imgHtml = p.image
+            ? '<img src="'+API+p.image+'" alt="'+p.name+'" style="cursor:zoom-in" onclick="openLightbox(''+API+p.image+'',''+p.name+'',event)" onerror="this.parentNode.innerHTML=''+emojis[i%emojis.length]+''">'
+            : emojis[i%emojis.length];
+          var bottomHtml = isActive
+            ? (inCart
+                ? '<div class="car-qty"><div class="qty-ctrl"><button onclick="changeQtyInBatch(''+batch.id+'',''+p.id+'',-1)">−</button><span>'+qty+'</span><button onclick="changeQtyInBatch(''+batch.id+'',''+p.id+'',1)">+</button></div><button class="add-btn" onclick="removeFromCartInBatch(''+batch.id+'',''+p.id+'')">Remove</button></div>'
+                : '<div class="car-qty"><button class="add-btn" style="width:100%" onclick="addToCartInBatch(''+batch.id+'',''+p.id+'')">+ Add to Order</button></div>'
+              )
+            : '<div class="closed-label">Batch Closed</div>';
+          return '<div class="car-card'+(inCart?' in-cart':'')+(isActive?'':' closed-card')+'">'
+            +'<div class="car-img">'+imgHtml+'</div>'
+            +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+(p.model?' · '+p.model:'')+'</div><div class="car-name">'+p.name+'</div>'
+            +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div></div>'
+            +bottomHtml+'</div>';
+        }).join('')
+      + '</div>';
+  }
+
+  return countdownHtml + closedBanner + productsHtml;
 }
 
-function renderProducts() {
-  var b = S.currentBatch;
-  var isActive = b.status === 'active';
-  var emojis = ['🔵','🔴','🟡','🟠','🟢','⚪','🏎','🚗'];
-  document.getElementById('model-count').textContent = '('+S.currentProducts.length+' models)';
-
-  document.getElementById('cars-grid').innerHTML = S.currentProducts.map(function(p,i){
-    var qty = S.cart[p.id]||0, inCart = qty>0;
-    var imgHtml = p.image
-      ? '<img src="'+API+p.image+'" alt="'+p.name+'" style="cursor:zoom-in" onclick="openLightbox(\''+API+p.image+'\',\''+p.name+'\',event)" onerror="this.parentNode.innerHTML=\''+emojis[i%emojis.length]+'\'">'
-      : emojis[i%emojis.length];
-
-    var bottomHtml = isActive
-      ? (inCart
-          ? '<div class="car-qty"><div class="qty-ctrl"><button onclick="changeQty(\''+p.id+'\',-1)">−</button><span>'+qty+'</span><button onclick="changeQty(\''+p.id+'\',1)">+</button></div><button class="add-btn" onclick="removeFromCart(\''+p.id+'\')">Remove</button></div>'
-          : '<div class="car-qty"><button class="add-btn" style="width:100%" onclick="addToCart(\''+p.id+'\')">+ Add to Order</button></div>'
-        )
-      : '<div class="closed-label">Batch Closed</div>';
-
-    return '<div class="car-card'+(inCart?' in-cart':'')+(isActive?'':' closed-card')+'">'
-      +'<div class="car-img">'+imgHtml+'</div>'
-      +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+(p.model?' · '+p.model:'')+'</div><div class="car-name">'+p.name+'</div>'
-      +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div></div>'
-      +bottomHtml+'</div>';
-  }).join('');
-
+// Cart functions that set current batch context
+function addToCartInBatch(batchId, productId){
+  // Switch context to this batch
+  var batchData = S.allBatches.find(function(b){return b.id===batchId;});
+  if(S.currentBatch && S.currentBatch.id!==batchId){
+    // Switching batch — clear old cart
+    S.cart={};
+  }
+  if(batchData) S.currentBatch=batchData;
+  // Get products from the rendered inner
+  S.cart[productId]=1;
+  refreshBatchInner(batchId);
   updateCartFloat();
 }
 
-function addToCart(id){S.cart[id]=1;renderProducts();}
-function removeFromCart(id){delete S.cart[id];renderProducts();if(!Object.keys(S.cart).length)closeOrderFlow();}
-function changeQty(id,d){S.cart[id]=Math.max(1,(S.cart[id]||0)+d);renderProducts();}
-function cartTotal(){return S.currentProducts.reduce(function(a,p){return a+(S.cart[p.id]?p.price*S.cart[p.id]:0);},0);}
+function removeFromCartInBatch(batchId, productId){
+  delete S.cart[productId];
+  refreshBatchInner(batchId);
+  updateCartFloat();
+  if(!Object.keys(S.cart).length) closeOrderFlow();
+}
+
+function changeQtyInBatch(batchId, productId, d){
+  S.cart[productId]=Math.max(1,(S.cart[productId]||0)+d);
+  refreshBatchInner(batchId);
+  updateCartFloat();
+}
+
+function refreshBatchInner(batchId){
+  // Re-render just the inner content of this batch card
+  var batchData = S.allBatches.find(function(b){return b.id===batchId;});
+  if(!batchData) return;
+  // We need products - reload from server
+  loadBatchProducts(batchId);
+}
+
+// Keep countdown ticking for visible batch cards
+function updateCountdown(){
+  S.allBatches.forEach(function(b){
+    if(b.status!=='active'||!b.deadline) return;
+    var el=document.getElementById('cd-'+b.id);
+    if(!el) return;
+    var diff=new Date(b.deadline)-new Date();
+    if(diff<=0){el.textContent='CLOSED';return;}
+    var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
+    el.textContent=(d>0?d+'d ':'')+pad(h)+':'+pad(m)+':'+pad(s);
+  });
+}
+function pad(n){return n<10?'0'+n:n;}
+
+// selectBatch kept for compatibility
+async function selectBatch(batchId){
+  await loadBatchProducts(batchId);
+}
+
+
+function addToCart(id){S.cart[id]=1;}
+function removeFromCart(id){delete S.cart[id];if(!Object.keys(S.cart).length)closeOrderFlow();}
+function changeQty(id,d){S.cart[id]=Math.max(1,(S.cart[id]||0)+d);}
+function cartTotal(){return (S.currentProducts||[]).reduce(function(a,p){return a+(S.cart[p.id]?p.price*S.cart[p.id]:0);},0);}
 function cartCount(){return Object.values(S.cart).reduce(function(a,b){return a+b;},0);}
 
 function updateCartFloat(){
@@ -732,6 +875,7 @@ function updateCartFloat(){
 
 function openOrderFlow(){
   if(!S.customer){document.getElementById('login-prompt').style.display='';document.getElementById('login-prompt').scrollIntoView({behavior:'smooth',block:'center'});return;}
+  if(!S.currentBatch||S.currentBatch.status!=='active'){toast('Please select an active batch to order from');return;}
   document.getElementById('order-flow').style.display='';
   document.getElementById('flow-step1').style.display='';
   document.getElementById('flow-success').style.display='none';
@@ -745,7 +889,7 @@ function goToAuth(){closeLoginPrompt();showPage('auth',null);document.querySelec
 
 function renderFlowItems(){
   var items='',total=0;
-  S.currentProducts.forEach(function(p){
+  (S.currentProducts||[]).forEach(function(p){
     if(!S.cart[p.id])return;
     var sub=p.price*S.cart[p.id];total+=sub;
     items+='<div class="order-item"><span class="name">'+p.name+'</span>'
