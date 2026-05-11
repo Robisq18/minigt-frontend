@@ -927,7 +927,7 @@ function closeOrderFlow(){
 
 function showOrderError(msg){
   var errEl=document.getElementById('order-error-msg');
-  if(errEl){errEl.textContent=msg;errEl.style.display='';errEl.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  if(errEl){errEl.innerHTML=msg;errEl.style.display='';errEl.scrollIntoView({behavior:'smooth',block:'nearest'});}
   else toast(msg);
 }
 function closeLoginPrompt(){document.getElementById('login-prompt').style.display='none';}
