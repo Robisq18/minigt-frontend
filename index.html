@@ -663,6 +663,15 @@ async function boot() {
     } catch(e) { S.customerToken = null; }
   }
   updateNavAuth();
+
+  // Check maintenance mode from server (after admin token restored so admin is never blocked)
+  try{
+    var mR = await fetch(API+'/api/maintenance');
+    var mD = await mR.json();
+    localStorage.setItem('maintenanceMode', mD.enabled ? 'true' : 'false');
+  }catch(e){}
+  applyMaintenance();
+
   await loadBatches();
   setInterval(updateCountdown, 1000);
 
@@ -1848,15 +1857,21 @@ document.addEventListener('click',function(e){
 // MAINTENANCE MODE
 function checkMaintenance(){ return localStorage.getItem('maintenanceMode')==='true'; }
 
-function applyMaintenance(){
+function applyMaintenance(force){
   var isOn = checkMaintenance();
-  if(S.adminToken || window.location.hash==='#admin') return;
+  // Admin bypass — unless force=true (used for preview)
+  if(!force && (S.adminToken || window.location.hash==='#admin')) return;
   var mp = document.getElementById('page-maintenance');
+  if(!mp) return;
   if(isOn){
     document.querySelectorAll('.page').forEach(function(x){ x.classList.remove('active'); });
-    if(mp){ mp.classList.add('active'); }
+    mp.classList.add('active');
   } else {
-    if(mp) mp.classList.remove('active');
+    mp.classList.remove('active');
+    // Restore shop page if nothing is active
+    if(!document.querySelector('.page.active')){
+      document.getElementById('page-shop').classList.add('active');
+    }
   }
 }
 
@@ -1869,6 +1884,7 @@ async function toggleMaintenance(){
     if(!d.success){ toast('Error saving maintenance state'); return; }
   }catch(e){ toast('Connection error'); return; }
   updateMaintenanceUI(newState);
+  if(!newState) showPage('shop', document.getElementById('nav-shop'));
   toast('Maintenance mode '+(newState?'ON - customers see maintenance page':'OFF - site is live'));
 }
 
