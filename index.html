@@ -470,7 +470,7 @@
       <div class="stat-card"><h3>Total Batches</h3><div class="big" id="a-batches">–</div></div>
       <div class="stat-card"><h3>Total Orders</h3><div class="big" id="a-orders">–</div></div>
       <div class="stat-card"><h3>Customers</h3><div class="big" id="a-customers">–</div></div>
-      <div class="stat-card"><h3>Active Batch</h3><div class="big" id="a-active" style="font-size:16px;margin-top:6px">–</div></div>
+      <div class="stat-card"><h3>Active Batches</h3><div class="big" id="a-active">–</div></div>
       <div class="stat-card" id="maintenance-card" onclick="toggleMaintenance()" style="cursor:pointer;border:2px solid transparent;transition:all .2s"><h3>Maintenance</h3><div id="a-maintenance" style="font-size:18px;font-weight:700;margin-top:6px">–</div></div>
     </div>
 
@@ -1364,7 +1364,15 @@ function renderAdminPanel(){
   document.getElementById('a-batches').textContent=S.adminBatches.length;
   document.getElementById('a-orders').textContent=(S.adminPreorders||S.adminOrders).length;
   document.getElementById('a-customers').textContent=S.adminCustomers.length;
-  document.getElementById('a-active').textContent=activeBatch?activeBatch.ref:'None';
+  var activeBatches=S.adminBatches.filter(function(b){return b.status==='active';});
+  var activeEl=document.getElementById('a-active');
+  if(activeEl){
+    activeEl.textContent=activeBatches.length;
+    activeEl.style.fontSize='30px';
+  }
+  // Update stat card label
+  var activeLabel=document.querySelector('#a-active')&&document.querySelector('#a-active').closest('.stat-card')&&document.querySelector('#a-active').closest('.stat-card').querySelector('h3');
+  if(activeLabel) activeLabel.textContent='Active Batches';
   updateMaintenanceUI(checkMaintenance());
   renderAdminBatches();renderAdminOrders();renderAdminCustomers();
   // populate order filter
@@ -1854,13 +1862,14 @@ function applyMaintenance(){
 
 async function toggleMaintenance(){
   var newState = !checkMaintenance();
-  localStorage.setItem('maintenanceMode', newState);
+  localStorage.setItem('maintenanceMode', newState ? 'true' : 'false');
   try{
-    await fetch(API+'/api/admin/maintenance',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify({enabled:newState})});
-  }catch(e){}
+    var r = await fetch(API+'/api/admin/maintenance',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},body:JSON.stringify({enabled:newState})});
+    var d = await r.json();
+    if(!d.success){ toast('Error saving maintenance state'); return; }
+  }catch(e){ toast('Connection error'); return; }
   updateMaintenanceUI(newState);
-  if(!newState) showPage('shop', document.getElementById('nav-shop'));
-  toast('Maintenance mode '+(newState?'ON':'OFF'));
+  toast('Maintenance mode '+(newState?'ON - customers see maintenance page':'OFF - site is live'));
 }
 
 function updateMaintenanceUI(isOn){
