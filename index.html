@@ -589,7 +589,8 @@ const API = 'https://minigt-backend-production.up.railway.app';
 
 var S = {
   allBatches: [], currentBatch: null, currentProducts: [],
-  cart: {}, customer: null, customerToken: null,
+  cart: {}, _batchProducts: {}, // cache of loaded products per batch
+  customer: null, customerToken: null,
   adminToken: null, adminBatches: [], adminOrders: [], adminCustomers: [],
   selectedAdminBatchId: null, uploadingProductId: null,
   currentAuthTab: 'login', regPhone: '', regData: null,
@@ -747,6 +748,8 @@ async function loadBatchProducts(batchId){
       S.currentProducts = products;
     }
 
+    // Cache products for price lookup in cartTotal
+    S._batchProducts[batch.id] = products;
     inner.innerHTML = renderBatchInnerHTML(batch, products);
     updateCartFloat();
   } catch(e){
@@ -780,7 +783,7 @@ function renderBatchInnerHTML(batch, products){
   }
 
   var cards = products.map(function(p,i){
-    var qty = (S.currentBatch && S.currentBatch.id===batch.id) ? (S.cart[p.id]||0) : 0;
+    var qty = (S.cart[batch.id]&&S.cart[batch.id][p.id]) ? S.cart[batch.id][p.id] : 0;
     var inCart = qty>0;
     var emoji = emojis[i%emojis.length];
     var imgHtml = p.image
@@ -821,29 +824,27 @@ function renderBatchInnerHTML(batch, products){
 
 
 // Cart functions that set current batch context
+// Cart is now keyed by batchId: { batchId: { productId: qty } }
 function addToCartInBatch(batchId, productId){
-  // Switch context to this batch
-  var batchData = S.allBatches.find(function(b){return b.id===batchId;});
-  if(S.currentBatch && S.currentBatch.id!==batchId){
-    // Switching batch — clear old cart
-    S.cart={};
-  }
-  if(batchData) S.currentBatch=batchData;
-  // Get products from the rendered inner
-  S.cart[productId]=1;
+  if(!S.cart[batchId]) S.cart[batchId]={};
+  S.cart[batchId][productId]=1;
   refreshBatchInner(batchId);
   updateCartFloat();
 }
 
 function removeFromCartInBatch(batchId, productId){
-  delete S.cart[productId];
+  if(S.cart[batchId]){
+    delete S.cart[batchId][productId];
+    if(!Object.keys(S.cart[batchId]).length) delete S.cart[batchId];
+  }
   refreshBatchInner(batchId);
   updateCartFloat();
-  if(!Object.keys(S.cart).length) closeOrderFlow();
+  if(!cartCount()) closeOrderFlow();
 }
 
 function changeQtyInBatch(batchId, productId, d){
-  S.cart[productId]=Math.max(1,(S.cart[productId]||0)+d);
+  if(!S.cart[batchId]) S.cart[batchId]={};
+  S.cart[batchId][productId]=Math.max(1,(S.cart[batchId][productId]||0)+d);
   refreshBatchInner(batchId);
   updateCartFloat();
 }
@@ -876,21 +877,40 @@ async function selectBatch(batchId){
 }
 
 
-function addToCart(id){S.cart[id]=1;}
-function removeFromCart(id){delete S.cart[id];if(!Object.keys(S.cart).length)closeOrderFlow();}
-function changeQty(id,d){S.cart[id]=Math.max(1,(S.cart[id]||0)+d);}
-function cartTotal(){return (S.currentProducts||[]).reduce(function(a,p){return a+(S.cart[p.id]?p.price*S.cart[p.id]:0);},0);}
-function cartCount(){return Object.values(S.cart).reduce(function(a,b){return a+b;},0);}
+function cartTotal(){
+  var total=0;
+  Object.keys(S.cart).forEach(function(batchId){
+    var batchCart=S.cart[batchId];
+    // Find products for this batch from allBatches cached data
+    Object.keys(batchCart).forEach(function(prodId){
+      // Find product price from loaded batch products
+      var prod=S._batchProducts[batchId]&&S._batchProducts[batchId].find(function(p){return p.id===prodId;});
+      if(prod) total+=prod.price*batchCart[prodId];
+    });
+  });
+  return total;
+}
+function cartCount(){
+  var count=0;
+  Object.values(S.cart).forEach(function(batchCart){
+    Object.values(batchCart).forEach(function(qty){count+=qty;});
+  });
+  return count;
+}
 
 function updateCartFloat(){
   var count=cartCount(),total=cartTotal();
+  var batches=Object.keys(S.cart).length;
   document.getElementById('cart-float').style.display=count>0?'block':'none';
-  document.getElementById('cart-badge-text').textContent=count+' item'+(count!==1?'s':'')+' · BND $'+total.toFixed(2);
+  var label=count+' item'+(count!==1?'s':'');
+  if(batches>1) label+=' · '+batches+' batches';
+  label+=' · BND $'+total.toFixed(2);
+  document.getElementById('cart-badge-text').textContent=label;
 }
 
 function openOrderFlow(){
   if(!S.customer){document.getElementById('login-prompt').style.display='';document.getElementById('login-prompt').scrollIntoView({behavior:'smooth',block:'center'});return;}
-  if(!S.currentBatch||S.currentBatch.status!=='active'){toast('Please select an active batch to order from');return;}
+  if(!cartCount()){toast('No items selected');return;}
   document.getElementById('order-flow').style.display='';
   document.getElementById('flow-step1').style.display='';
   document.getElementById('flow-success').style.display='none';
@@ -903,34 +923,71 @@ function closeLoginPrompt(){document.getElementById('login-prompt').style.displa
 function goToAuth(){closeLoginPrompt();showPage('auth',null);document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));}
 
 function renderFlowItems(){
-  var items='',total=0;
-  (S.currentProducts||[]).forEach(function(p){
-    if(!S.cart[p.id])return;
-    var sub=p.price*S.cart[p.id];total+=sub;
-    items+='<div class="order-item"><span class="name">'+p.name+'</span>'
-      +'<div class="qty-ctrl" style="transform:scale(.9)"><button onclick="changeQty(\''+p.id+'\',-1)">−</button><span>'+S.cart[p.id]+'</span><button onclick="changeQty(\''+p.id+'\',1)">+</button></div>'
-      +'<span class="subtotal">$'+sub.toFixed(2)+'</span></div>';
+  var flowHtml='', grandTotal=0;
+  Object.keys(S.cart).forEach(function(batchId){
+    var batchCart=S.cart[batchId];
+    var products=S._batchProducts[batchId]||[];
+    var batch=S.allBatches.find(function(b){return b.id===batchId;});
+    if(!batch) return;
+    var batchTotal=0, itemsHtml='';
+    Object.keys(batchCart).forEach(function(prodId){
+      var prod=products.find(function(p){return p.id===prodId;});
+      if(!prod) return;
+      var qty=batchCart[prodId], sub=prod.price*qty;
+      batchTotal+=sub; grandTotal+=sub;
+      itemsHtml+='<div class="order-item">'
+        +'<span class="name">'+prod.name+'</span>'
+        +'<div class="qty-ctrl" style="transform:scale(.9)">'
+        +'<button class="qty-btn" data-batch="'+batchId+'" data-prod="'+prodId+'" data-d="-1">−</button>'
+        +'<span>'+qty+'</span>'
+        +'<button class="qty-btn" data-batch="'+batchId+'" data-prod="'+prodId+'" data-d="1">+</button>'
+        +'</div>'
+        +'<span class="subtotal">$'+sub.toFixed(2)+'</span></div>';
+    });
+    if(!itemsHtml) return;
+    flowHtml+='<div style="background:var(--bg);border-radius:8px;padding:12px 14px;margin-bottom:12px">'
+      +'<div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">'+batch.ref+' — '+batch.title+'</div>'
+      +itemsHtml
+      +'<div style="border-top:0.5px solid var(--border);padding-top:8px;margin-top:8px;display:flex;justify-content:space-between;font-size:13px;font-weight:600">'
+      +'<span>Subtotal</span><span>BND $'+batchTotal.toFixed(2)+'</span></div>'
+      +'</div>';
   });
-  document.getElementById('flow-items').innerHTML=items;
-  document.getElementById('flow-total').textContent='BND $'+total.toFixed(2);
+  document.getElementById('flow-items').innerHTML=flowHtml||'<div style="color:var(--muted);font-size:13px">No items</div>';
+  document.getElementById('flow-total').textContent='BND $'+grandTotal.toFixed(2);
   document.getElementById('flow-customer-info').innerHTML='<strong>'+S.customer.firstName+' '+S.customer.lastName+'</strong><br>'+S.customer.phone;
 }
-
 async function submitOrder(){
-  var items=[];
-  S.currentProducts.forEach(function(p){if(S.cart[p.id])items.push({productId:p.id,name:p.name,qty:S.cart[p.id],price:p.price});});
-  if(!items.length){toast('No items selected');return;}
+  if(!cartCount()){toast('No items selected');return;}
   var btn=event.target;btn.disabled=true;btn.textContent='Submitting...';
-  try{
-    var r=await fetch(API+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.customerToken},body:JSON.stringify({batchId:S.currentBatch.id,items})});
-    var d=await r.json();
-    if(d.ref){document.getElementById('success-ref').textContent='Order Ref: '+d.ref;document.getElementById('flow-step1').style.display='none';document.getElementById('flow-success').style.display='';S.cart={};updateCartFloat();}
-    else{toast(d.error||'Error submitting order');}
-  }catch(e){toast('Connection error');}
-  btn.disabled=false;btn.textContent='🎉 Place Pre-Order';
+  var refs=[], errors=[];
+  var batchIds=Object.keys(S.cart);
+  for(var i=0;i<batchIds.length;i++){
+    var batchId=batchIds[i];
+    var batchCart=S.cart[batchId];
+    var products=S._batchProducts[batchId]||[];
+    var items=Object.keys(batchCart).map(function(prodId){
+      var prod=products.find(function(p){return p.id===prodId;});
+      return prod?{productId:prodId,name:prod.name,qty:batchCart[prodId],price:prod.price}:null;
+    }).filter(Boolean);
+    if(!items.length) continue;
+    try{
+      var r=await fetch(API+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.customerToken},body:JSON.stringify({batchId:batchId,items:items})});
+      var d=await r.json();
+      if(d.ref) refs.push(d.ref);
+      else errors.push(d.error||'Error for '+batchId);
+    }catch(e){errors.push('Connection error');}
+  }
+  btn.disabled=false;btn.textContent='Place Pre-Order';
+  if(refs.length){
+    var refsHtml=refs.map(function(r){return '<div>'+r+'</div>';}).join('');
+    document.getElementById('success-ref').innerHTML=refsHtml;
+    document.getElementById('flow-step1').style.display='none';
+    document.getElementById('flow-success').style.display='';
+    S.cart={};updateCartFloat();
+  }
+  if(errors.length) toast(errors.join(' | '));
 }
-
-function resetAfterOrder(){document.getElementById('order-flow').style.display='none';renderProducts();}
+function resetAfterOrder(){document.getElementById('order-flow').style.display='none';}
 
 
 // ── AUTH ──────────────────────────────────────────────────
