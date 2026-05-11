@@ -647,7 +647,7 @@ function renderBatchCards() {
     // Expand the first (latest active) by default, rest collapsed
     var expanded = i===0;
     return '<div class="batch-card'+(isActive?' active-card':'')+'" id="bcard-'+b.id+'">'
-      +'<div class="batch-card-header" onclick="toggleBatchCard(''+b.id+'')">'
+      +'<div class="batch-card-header" onclick="toggleBatchCard(\'' +b.id+ '\')">'
       +'<div class="batch-card-left">'
       +'<div class="batch-card-ref">'+b.ref+(isActive?' · Active':' · Closed')+'</div>'
       +'<div class="batch-card-title">'+b.title+'</div>'
@@ -758,52 +758,67 @@ function renderBatchInnerHTML(batch, products){
   var isActive = batch.status==='active';
   var emojis = ['🔵','🔴','🟡','🟠','🟢','⚪','🏎','🚗'];
 
-  // Countdown for active batch
   var countdownHtml = '';
   if(isActive && batch.deadline){
     var diff = new Date(batch.deadline)-new Date();
     if(diff>0){
-      var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
-      countdownHtml='<div style="background:rgba(0,0,0,0.1);border-radius:8px;padding:8px 14px;text-align:center;margin-bottom:16px">'
-        +'<div style="font-size:10px;opacity:.7;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Closes in</div>'
-        +'<div style="font-family:var(--font-head);font-size:22px;letter-spacing:2px" id="cd-'+batch.id+'">'+pad(h)+':'+pad(m)+':'+pad(s)+'</div>'
-        +'<div style="font-size:10px;opacity:.6;margin-top:2px">'+new Date(batch.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>'
+      var dv=Math.floor(diff/86400000),hv=Math.floor((diff%86400000)/3600000),mv=Math.floor((diff%3600000)/60000),sv=Math.floor((diff%60000)/1000);
+      countdownHtml='<div style="background:rgba(192,39,45,0.08);border-radius:8px;padding:8px 14px;text-align:center;margin-bottom:16px">'
+        +'<div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px">Closes in</div>'
+        +'<div style="font-family:var(--font-head);font-size:22px;letter-spacing:2px;color:var(--red)" id="cd-'+batch.id+'">'+(dv>0?dv+'d ':'')+pad(hv)+':'+pad(mv)+':'+pad(sv)+'</div>'
+        +'<div style="font-size:10px;color:var(--muted);margin-top:2px">'+new Date(batch.deadline).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>'
         +'</div>';
     }
   }
 
   var closedBanner = !isActive
-    ? '<div style="background:#F3F4F6;border-radius:8px;padding:10px 14px;text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600">🔒 This batch is closed — no longer accepting orders</div>'
+    ? '<div style="background:#F3F4F6;border-radius:8px;padding:10px 14px;text-align:center;font-size:13px;color:var(--muted);margin-bottom:16px;font-weight:600">This batch is closed</div>'
     : '';
 
-  var productsHtml = '';
   if(!products || !products.length){
-    productsHtml = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No products in this batch yet.</div>';
-  } else {
-    productsHtml = '<div class="cars-grid">'
-      + products.map(function(p,i){
-          var qty = (S.currentBatch && S.currentBatch.id===batch.id) ? (S.cart[p.id]||0) : 0;
-          var inCart = qty>0;
-          var imgHtml = p.image
-            ? '<img src="'+API+p.image+'" alt="'+p.name+'" style="cursor:zoom-in" onclick="openLightbox(''+API+p.image+'',''+p.name+'',event)" onerror="this.parentNode.innerHTML=''+emojis[i%emojis.length]+''">'
-            : emojis[i%emojis.length];
-          var bottomHtml = isActive
-            ? (inCart
-                ? '<div class="car-qty"><div class="qty-ctrl"><button onclick="changeQtyInBatch(''+batch.id+'',''+p.id+'',-1)">−</button><span>'+qty+'</span><button onclick="changeQtyInBatch(''+batch.id+'',''+p.id+'',1)">+</button></div><button class="add-btn" onclick="removeFromCartInBatch(''+batch.id+'',''+p.id+'')">Remove</button></div>'
-                : '<div class="car-qty"><button class="add-btn" style="width:100%" onclick="addToCartInBatch(''+batch.id+'',''+p.id+'')">+ Add to Order</button></div>'
-              )
-            : '<div class="closed-label">Batch Closed</div>';
-          return '<div class="car-card'+(inCart?' in-cart':'')+(isActive?'':' closed-card')+'">'
-            +'<div class="car-img">'+imgHtml+'</div>'
-            +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+(p.model?' · '+p.model:'')+'</div><div class="car-name">'+p.name+'</div>'
-            +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div></div>'
-            +bottomHtml+'</div>';
-        }).join('')
-      + '</div>';
+    return countdownHtml + closedBanner + '<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px">No products yet.</div>';
   }
 
-  return countdownHtml + closedBanner + productsHtml;
+  var cards = products.map(function(p,i){
+    var qty = (S.currentBatch && S.currentBatch.id===batch.id) ? (S.cart[p.id]||0) : 0;
+    var inCart = qty>0;
+    var emoji = emojis[i%emojis.length];
+    var imgHtml = p.image
+      ? '<img src="'+API+p.image+'" class="product-img-clickable" data-name="'+p.name+'" style="width:100%;height:130px;object-fit:cover;cursor:zoom-in">'
+      : emoji;
+
+    // Use data attributes for batch/product IDs to avoid quote escaping
+    var bottomHtml;
+    if(isActive){
+      if(inCart){
+        bottomHtml = '<div class="car-qty">'
+          +'<div class="qty-ctrl">'
+          +'<button class="qty-btn" data-batch="'+batch.id+'" data-prod="'+p.id+'" data-d="-1">−</button>'
+          +'<span>'+qty+'</span>'
+          +'<button class="qty-btn" data-batch="'+batch.id+'" data-prod="'+p.id+'" data-d="1">+</button>'
+          +'</div>'
+          +'<button class="remove-btn add-btn" data-batch="'+batch.id+'" data-prod="'+p.id+'">Remove</button>'
+          +'</div>';
+      } else {
+        bottomHtml = '<div class="car-qty">'
+          +'<button class="add-to-cart-btn add-btn" style="width:100%" data-batch="'+batch.id+'" data-prod="'+p.id+'">+ Add to Order</button>'
+          +'</div>';
+      }
+    } else {
+      bottomHtml = '<div class="closed-label">Batch Closed</div>';
+    }
+
+    return '<div class="car-card'+(inCart?' in-cart':'')+(isActive?'':' closed-card')+'">'
+      +'<div class="car-img">'+imgHtml+'</div>'
+      +'<div class="car-info"><div class="car-scale">MINI GT '+p.scale+(p.model?' · '+p.model:'')+'</div>'
+      +'<div class="car-name">'+p.name+'</div>'
+      +'<div class="car-price">$'+Number(p.price).toFixed(2)+' <span>BND</span></div></div>'
+      +bottomHtml+'</div>';
+  }).join('');
+
+  return countdownHtml + closedBanner + '<div class="cars-grid">'+cards+'</div>';
 }
+
 
 // Cart functions that set current batch context
 function addToCartInBatch(batchId, productId){
@@ -917,17 +932,6 @@ async function submitOrder(){
 
 function resetAfterOrder(){document.getElementById('order-flow').style.display='none';renderProducts();}
 
-function updateCountdown(){
-  if(!S.currentBatch||S.currentBatch.status!=='active'||!S.currentBatch.deadline)return;
-  var el=document.getElementById('countdown');if(!el)return;
-  var diff=new Date(S.currentBatch.deadline)-new Date();
-  if(diff<=0){el.textContent='CLOSED';return;}
-  var d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000),m=Math.floor((diff%3600000)/60000),s=Math.floor((diff%60000)/1000);
-  el.textContent=(d>0?d+'d ':'')+pad(h)+':'+pad(m)+':'+pad(s);
-  var dtEl=document.getElementById('deadline-text');
-  if(dtEl)dtEl.textContent=new Date(S.currentBatch.deadline).toLocaleDateString('en-GB',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-}
-function pad(n){return n<10?'0'+n:n;}
 
 // ── AUTH ──────────────────────────────────────────────────
 function updateNavAuth(){
@@ -1534,6 +1538,22 @@ function closeLightbox(){
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2800);}
+
+// Event delegation for all dynamic buttons and images
+document.addEventListener('click', function(e){
+  // Image lightbox
+  var img = e.target.closest('.product-img-clickable');
+  if(img){ openLightbox(img.src, img.getAttribute('data-name'), e); return; }
+  // Add to cart
+  var addBtn = e.target.closest('.add-to-cart-btn');
+  if(addBtn){ addToCartInBatch(addBtn.getAttribute('data-batch'), addBtn.getAttribute('data-prod')); return; }
+  // Remove from cart
+  var removeBtn = e.target.closest('.remove-btn');
+  if(removeBtn){ removeFromCartInBatch(removeBtn.getAttribute('data-batch'), removeBtn.getAttribute('data-prod')); return; }
+  // Qty change
+  var qtyBtn = e.target.closest('.qty-btn');
+  if(qtyBtn){ changeQtyInBatch(qtyBtn.getAttribute('data-batch'), qtyBtn.getAttribute('data-prod'), parseInt(qtyBtn.getAttribute('data-d'))); return; }
+});
 
 boot();
 </script>
