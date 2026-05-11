@@ -248,7 +248,7 @@
       <button class="nav-tab active" id="nav-shop" onclick="showPage('shop',this)">Pre-Order</button>
       <button class="nav-tab" id="nav-history" onclick="showPage('history',this)" style="display:none">My Orders</button>
       <button class="nav-tab" id="nav-account" onclick="showPage('account',this)" style="display:none">Account</button>
-      <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)">Admin</button>
+      <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)" style="display:none">Admin</button>
       <button class="nav-btn" id="nav-auth-btn" onclick="handleNavAuth()">Login</button>
     </div>
     <!-- Mobile hamburger -->
@@ -266,8 +266,6 @@
     <button class="mm-item" onclick="showPage('shop',document.getElementById('nav-shop'));closeMobileMenu()">🚗 Pre-Order</button>
     <button class="mm-item" id="mm-history" onclick="showPage('history',document.getElementById('nav-history'));closeMobileMenu()" style="display:none">📦 My Orders</button>
     <button class="mm-item" id="mm-account" onclick="showPage('account',document.getElementById('nav-account'));closeMobileMenu()" style="display:none">👤 Account</button>
-    <div style="border-top:0.5px solid var(--border);margin:4px 0"></div>
-    <button class="mm-item" onclick="showPage('admin',document.getElementById('nav-admin-tab'));closeMobileMenu()">⚙️ Admin</button>
     <div style="border-top:0.5px solid var(--border);margin:4px 0"></div>
     <button class="mm-item" id="mm-auth-btn" onclick="handleNavAuth();closeMobileMenu()">Login</button>
   </div>
@@ -630,6 +628,18 @@ var S = {
 
 // ── BOOT ──────────────────────────────────────────────────
 async function boot() {
+  // Check for #admin in URL
+  if(window.location.hash === '#admin'){
+    document.getElementById('nav-admin-tab').style.display='';
+  }
+  // Listen for hash change
+  window.addEventListener('hashchange', function(){
+    if(window.location.hash === '#admin'){
+      document.getElementById('nav-admin-tab').style.display='';
+      showPage('admin', document.getElementById('nav-admin-tab'));
+    }
+  });
+
   S.customerToken = localStorage.getItem('ctoken');
   if (S.customerToken) {
     try {
@@ -668,7 +678,8 @@ async function boot() {
 
   // Restore last page if admin was on admin page
   var lastPage = localStorage.getItem('lastPage');
-  if(S.adminToken && lastPage === 'admin'){
+  if(S.adminToken && (lastPage === 'admin' || window.location.hash === '#admin')){
+    document.getElementById('nav-admin-tab').style.display='';
     showPage('admin', document.getElementById('nav-admin-tab'));
     document.getElementById('nav-admin-tab').classList.add('active');
     document.getElementById('nav-shop').classList.remove('active');
