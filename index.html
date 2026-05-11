@@ -348,6 +348,17 @@
   </div>
 </div>
 
+<!-- ═══ MAINTENANCE PAGE ═══ -->
+<div class="page" id="page-maintenance" style="display:none;min-height:80vh;display:none;align-items:center;justify-content:center;text-align:center;padding:40px 20px">
+  <div style="max-width:400px;margin:0 auto;padding:60px 20px">
+    <div style="font-size:72px;margin-bottom:20px">🚧</div>
+    <h1 style="font-family:var(--font-head);font-size:36px;letter-spacing:1px;margin-bottom:10px">UNDER MAINTENANCE</h1>
+    <p style="font-size:16px;color:var(--muted);margin-bottom:8px">We'll be right back!</p>
+    <p style="font-size:13px;color:var(--muted)">We're making some improvements. Please check back soon.</p>
+    <div style="margin-top:32px;width:48px;height:3px;background:var(--red);margin-left:auto;margin-right:auto;border-radius:2px"></div>
+  </div>
+</div>
+
 <!-- ═══ AUTH PAGE ═══ -->
 <div class="page" id="page-auth">
   <div style="max-width:420px;margin:32px auto">
@@ -453,11 +464,26 @@
   </div>
 
   <div id="admin-panel" style="display:none">
+    <!-- Maintenance toggle -->
+    <div id="maintenance-banner" style="display:none;background:#FEF3C7;border:0.5px solid #F59E0B;border-radius:10px;padding:12px 18px;margin-bottom:16px;display:none;align-items:center;justify-content:space-between;gap:12px">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:20px">🚧</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#92400E">Maintenance Mode is ON</div>
+          <div style="font-size:12px;color:#B45309">Customers see the maintenance page</div>
+        </div>
+      </div>
+      <button class="btn btn-sm" style="background:#92400E;color:#fff" onclick="toggleMaintenance()">Turn Off</button>
+    </div>
+
     <div class="admin-stats">
       <div class="stat-card"><h3>Total Batches</h3><div class="big" id="a-batches">–</div></div>
       <div class="stat-card"><h3>Total Orders</h3><div class="big" id="a-orders">–</div></div>
       <div class="stat-card"><h3>Customers</h3><div class="big" id="a-customers">–</div></div>
-      <div class="stat-card"><h3>Active Batch</h3><div class="big" id="a-active" style="font-size:16px;margin-top:6px">–</div></div>
+      <div class="stat-card" style="cursor:pointer" onclick="toggleMaintenance()" title="Click to toggle maintenance mode">
+        <h3>Maintenance</h3>
+        <div class="big" id="a-maintenance" style="font-size:18px;margin-top:4px">–</div>
+      </div>
     </div>
 
     <div class="admin-tabs">
@@ -628,6 +654,15 @@ var S = {
 
 // ── BOOT ──────────────────────────────────────────────────
 async function boot() {
+  // Check maintenance mode from backend
+  try{
+    var mR = await fetch(API+'/api/maintenance');
+    var mD = await mR.json();
+    if(mD.enabled) localStorage.setItem('maintenanceMode','true');
+    else localStorage.setItem('maintenanceMode','false');
+  }catch(e){}
+  applyMaintenance();
+
   // Check for #admin in URL
   if(window.location.hash === '#admin'){
     document.getElementById('nav-admin-tab').style.display='';
@@ -1351,6 +1386,8 @@ function renderAdminPanel(){
   document.getElementById('a-orders').textContent=(S.adminPreorders||S.adminOrders).length;
   document.getElementById('a-customers').textContent=S.adminCustomers.length;
   document.getElementById('a-active').textContent=activeBatch?activeBatch.ref:'None';
+  var maintOn=localStorage.getItem('maintenanceMode')==='true';
+  updateMaintenanceUI(maintOn);
   renderAdminBatches();renderAdminOrders();renderAdminCustomers();
   // populate order filter
   var filter=document.getElementById('order-batch-filter');
@@ -1821,6 +1858,46 @@ document.addEventListener('click',function(e){
     menu.style.display='none';
   }
 });
+
+// ── MAINTENANCE MODE ─────────────────────────────────────
+function checkMaintenance(){
+  var isOn = localStorage.getItem('maintenanceMode') === 'true';
+  return isOn;
+}
+
+function applyMaintenance(){
+  var isOn = checkMaintenance();
+  // If admin is viewing, don't block them
+  if(S.adminToken) return;
+  if(isOn){
+    document.querySelectorAll('.page').forEach(function(x){x.classList.remove('active');});
+    document.getElementById('page-maintenance').style.display='flex';
+    document.getElementById('page-maintenance').classList.add('active');
+  }
+}
+
+async function toggleMaintenance(){
+  var isOn = checkMaintenance();
+  var newState = !isOn;
+  localStorage.setItem('maintenanceMode', newState);
+  // Save to backend so all users see it
+  try{
+    await fetch(API+'/api/admin/maintenance',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.adminToken},
+      body:JSON.stringify({enabled:newState})
+    });
+  }catch(e){}
+  updateMaintenanceUI(newState);
+  toast('Maintenance mode '+(newState?'ON':'OFF'));
+}
+
+function updateMaintenanceUI(isOn){
+  var banner = document.getElementById('maintenance-banner');
+  var stat = document.getElementById('a-maintenance');
+  if(banner) banner.style.display = isOn ? 'flex' : 'none';
+  if(stat){ stat.textContent = isOn ? '🟠 ON' : '🟢 OFF'; stat.style.fontSize='14px'; stat.style.marginTop='8px'; }
+}
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2800);}
 
