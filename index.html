@@ -483,7 +483,7 @@
         </h3>
         <div style="overflow-x:auto">
           <table>
-            <thead><tr><th>Ref</th><th>Customer</th><th>Phone</th><th>Batch</th><th>Items</th><th>Total</th><th>Date</th></tr></thead>
+            <thead><tr><th>PO Number</th><th>Customer</th><th>Phone</th><th>Batches</th><th></th><th>Total</th><th>Date</th></tr></thead>
             <tbody id="a-orders-table"></tbody>
           </table>
           <div id="a-no-orders" style="text-align:center;padding:20px;font-size:13px;color:var(--muted)">No orders.</div>
@@ -591,7 +591,7 @@ var S = {
   allBatches: [], currentBatch: null, currentProducts: [],
   cart: {}, _batchProducts: {}, // cache of loaded products per batch
   customer: null, customerToken: null,
-  adminToken: null, adminBatches: [], adminOrders: [], adminCustomers: [],
+  adminToken: null, adminBatches: [], adminOrders: [], adminPreorders: [], adminCustomers: [], _filteredPreorders: null,
   selectedAdminBatchId: null, uploadingProductId: null,
   currentAuthTab: 'login', regPhone: '', regData: null,
 };
@@ -959,33 +959,41 @@ function renderFlowItems(){
 async function submitOrder(){
   if(!cartCount()){toast('No items selected');return;}
   var btn=event.target;btn.disabled=true;btn.textContent='Submitting...';
-  var refs=[], errors=[];
-  var batchIds=Object.keys(S.cart);
-  for(var i=0;i<batchIds.length;i++){
-    var batchId=batchIds[i];
+
+  // Build array of { batchId, items } for all batches in cart
+  var batches=[];
+  Object.keys(S.cart).forEach(function(batchId){
     var batchCart=S.cart[batchId];
     var products=S._batchProducts[batchId]||[];
     var items=Object.keys(batchCart).map(function(prodId){
       var prod=products.find(function(p){return p.id===prodId;});
       return prod?{productId:prodId,name:prod.name,qty:batchCart[prodId],price:prod.price}:null;
     }).filter(Boolean);
-    if(!items.length) continue;
-    try{
-      var r=await fetch(API+'/api/orders',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.customerToken},body:JSON.stringify({batchId:batchId,items:items})});
-      var d=await r.json();
-      if(d.ref) refs.push(d.ref);
-      else errors.push(d.error||'Error for '+batchId);
-    }catch(e){errors.push('Connection error');}
-  }
+    if(items.length) batches.push({batchId:batchId,items:items});
+  });
+
+  try{
+    var r=await fetch(API+'/api/orders/preorder',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+S.customerToken},
+      body:JSON.stringify({batches:batches})
+    });
+    var d=await r.json();
+    if(d.poNumber){
+      document.getElementById('success-ref').innerHTML=
+        '<div style="font-size:12px;color:var(--muted);margin-bottom:4px">Pre-Order Number</div>'
+        +'<div style="font-size:22px;font-family:var(--font-head);letter-spacing:1px;color:var(--red)">'+d.poNumber+'</div>'
+        +(d.refs.length>1?'<div style="font-size:11px;color:var(--muted);margin-top:4px">'+d.refs.length+' batches included</div>':'');
+      document.getElementById('flow-step1').style.display='none';
+      document.getElementById('flow-success').style.display='';
+      S.cart={};updateCartFloat();
+      // Refresh all batch cards
+      Object.keys(S._batchProducts).forEach(function(bid){refreshBatchInner(bid);});
+    } else {
+      toast(d.error||'Error submitting order');
+    }
+  }catch(e){toast('Connection error. Please try again.');}
   btn.disabled=false;btn.textContent='Place Pre-Order';
-  if(refs.length){
-    var refsHtml=refs.map(function(r){return '<div>'+r+'</div>';}).join('');
-    document.getElementById('success-ref').innerHTML=refsHtml;
-    document.getElementById('flow-step1').style.display='none';
-    document.getElementById('flow-success').style.display='';
-    S.cart={};updateCartFloat();
-  }
-  if(errors.length) toast(errors.join(' | '));
 }
 function resetAfterOrder(){document.getElementById('order-flow').style.display='none';}
 
@@ -1126,15 +1134,32 @@ async function loadHistory(){
     var r=await fetch(API+'/api/orders/my',{headers:{Authorization:'Bearer '+S.customerToken}});
     var d=await r.json();
     document.getElementById('history-loading').style.display='none';
-    if(!d.orders||!d.orders.length){document.getElementById('history-empty').style.display='';return;}
-    document.getElementById('history-list').innerHTML=d.orders.map(function(o){
-      var items=(o.items||[]).map(function(i){return '<div class="history-item"><span>'+i.name+' × '+i.qty+'</span><span>BND $'+(i.price*i.qty).toFixed(2)+'</span></div>';}).join('');
-      var total=(o.items||[]).reduce(function(a,i){return a+i.price*i.qty;},0);
-      return '<div class="history-card"><div class="history-batch">'+o.batchRef+' — '+o.batchTitle+'</div>'
-        +'<div class="history-ref">'+o.ref+'</div>'
-        +'<div style="font-size:12px;color:var(--muted);margin-top:2px">'+new Date(o.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>'
-        +'<div class="history-items">'+items+'</div>'
-        +'<div class="history-total"><span>Total</span><span>BND $'+total.toFixed(2)+'</span></div></div>';
+    var preorders=d.preorders||[];
+    if(!preorders.length){document.getElementById('history-empty').style.display='';return;}
+    document.getElementById('history-list').innerHTML=preorders.map(function(po){
+      var grandTotal=0;
+      var batchesHtml=(po.batchOrders||[]).map(function(bo){
+        var items=(bo.items||[]).map(function(i){
+          return '<div class="history-item"><span>'+i.name+' × '+i.qty+'</span><span>BND $'+(i.price*i.qty).toFixed(2)+'</span></div>';
+        }).join('');
+        var sub=(bo.items||[]).reduce(function(a,i){return a+i.price*i.qty;},0);
+        grandTotal+=sub;
+        return '<div style="margin-top:10px;padding-top:10px;border-top:0.5px solid var(--border)">'
+          +'<div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:.4px;margin-bottom:6px">'+bo.batchRef+' — '+bo.batchTitle+'</div>'
+          +'<div class="history-items">'+items+'</div>'
+          +'</div>';
+      }).join('');
+      return '<div class="history-card">'
+        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
+        +'<div>'
+        +'<div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Pre-Order Number</div>'
+        +'<div style="font-family:var(--font-head);font-size:22px;letter-spacing:1px;color:var(--red)">'+po.poNumber+'</div>'
+        +'</div>'
+        +'<div style="font-size:12px;color:var(--muted);text-align:right">'+new Date(po.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>'
+        +'</div>'
+        +batchesHtml
+        +'<div class="history-total" style="margin-top:10px"><span>Grand Total</span><span>BND $'+grandTotal.toFixed(2)+'</span></div>'
+        +'</div>';
     }).join('');
   }catch(e){document.getElementById('history-loading').style.display='none';document.getElementById('history-empty').style.display='';}
 }
@@ -1193,7 +1218,9 @@ async function loadAdminData(){
       fetch(API+'/api/admin/customers',{headers:h}),
     ]);
     S.adminBatches=(await bR.json()).batches||[];
-    S.adminOrders=(await oR.json()).orders||[];
+    var ordersData=await oR.json();
+    S.adminOrders=ordersData.orders||[];
+    S.adminPreorders=ordersData.preorders||[];
     S.adminCustomers=(await cR.json()).customers||[];
   }catch(e){S.adminBatches=[];S.adminOrders=[];S.adminCustomers=[];}
   renderAdminPanel();
@@ -1202,7 +1229,7 @@ async function loadAdminData(){
 function renderAdminPanel(){
   var activeBatch=S.adminBatches.find(function(b){return b.status==='active';});
   document.getElementById('a-batches').textContent=S.adminBatches.length;
-  document.getElementById('a-orders').textContent=S.adminOrders.length;
+  document.getElementById('a-orders').textContent=(S.adminPreorders||S.adminOrders).length;
   document.getElementById('a-customers').textContent=S.adminCustomers.length;
   document.getElementById('a-active').textContent=activeBatch?activeBatch.ref:'None';
   renderAdminBatches();renderAdminOrders();renderAdminCustomers();
@@ -1446,36 +1473,56 @@ async function closeBatch(){
 
 function renderAdminOrders(){
   var tbody=document.getElementById('a-orders-table');
-  var orders=S.adminOrders;
-  document.getElementById('a-no-orders').style.display=orders.length===0?'':'none';
-  tbody.innerHTML=orders.map(function(o){
-    var mods=(o.items||[]).map(function(i){return i.name+'×'+i.qty;}).join(', ');
-    var total=(o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
-    return '<tr><td style="font-weight:700;color:var(--red);white-space:nowrap">'+o.ref+'</td><td>'+o.customerName+'</td><td>'+o.phone+'</td>'
-      +'<td style="font-size:11px;white-space:nowrap">'+o.batchRef+'</td>'
-      +'<td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="'+mods+'">'+mods+'</td>'
-      +'<td style="font-weight:600;white-space:nowrap">$'+total.toFixed(2)+'</td>'
-      +'<td style="font-size:11px;color:var(--muted);white-space:nowrap">'+new Date(o.createdAt).toLocaleDateString('en-GB')+'</td></tr>';
-  }).join('');
-}
+  if(!tbody) return;
+  var preorders=S._filteredPreorders||S.adminPreorders||[];
+  document.getElementById('a-no-orders').style.display=preorders.length===0?'':'none';
+  tbody.innerHTML='';
+  preorders.forEach(function(po){
+    var grandTotal=0;
+    var batchRowsHtml=(po.batchOrders||[]).map(function(bo){
+      var sub=(bo.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
+      grandTotal+=sub;
+      var mods=(bo.items||[]).map(function(i){return i.name+' x'+i.qty;}).join(', ');
+      return '<tr style="background:#FAFAFA">'
+        +'<td style="padding-left:28px;font-size:11px;color:var(--muted)" colspan="2">&rarr; '+bo.batchRef+' &mdash; '+bo.batchTitle+'</td>'
+        +'<td colspan="3" style="font-size:12px;color:var(--muted)">'+mods+'</td>'
+        +'<td style="font-size:12px;font-weight:600">$'+sub.toFixed(2)+'</td>'
+        +'<td></td></tr>';
+    }).join('');
 
+    // Main row
+    var mainTr=document.createElement('tr');
+    mainTr.style.cursor='pointer';
+    mainTr.innerHTML=
+      '<td style="font-weight:700;color:var(--red);white-space:nowrap">'+po.poNumber+'</td>'
+      +'<td style="font-weight:600">'+po.customerName+'</td>'
+      +'<td>'+po.phone+'</td>'
+      +'<td style="font-size:11px;color:var(--muted)">'+(po.batchOrders||[]).length+' batch'+((po.batchOrders||[]).length!==1?'es':'')+'</td>'
+      +'<td style="font-size:11px;color:var(--red)">&#9660; expand</td>'
+      +'<td style="font-weight:700">$'+grandTotal.toFixed(2)+'</td>'
+      +'<td style="font-size:11px;color:var(--muted);white-space:nowrap">'+new Date(po.createdAt).toLocaleDateString('en-GB')+'</td>';
+
+    // Expand row
+    var expandTr=document.createElement('tr');
+    expandTr.style.display='none';
+    expandTr.innerHTML='<td colspan="7" style="padding:0;background:#FAFAFA"><table style="width:100%;border-collapse:collapse">'+batchRowsHtml+'</table></td>';
+
+    mainTr.addEventListener('click', function(){ expandTr.style.display=expandTr.style.display==='none'?'table-row':'none'; });
+    tbody.appendChild(mainTr);
+    tbody.appendChild(expandTr);
+  });
+}
 function filterOrders(){
   var batchId=document.getElementById('order-batch-filter').value;
-  var orders=batchId?S.adminOrders.filter(function(o){return o.batchId===batchId;}):S.adminOrders;
-  var tbody=document.getElementById('a-orders-table');
-  if(!tbody) return;
-  document.getElementById('a-no-orders').style.display=orders.length===0?'':'none';
-  tbody.innerHTML=orders.map(function(o){
-    var mods=(o.items||[]).map(function(i){return i.name+'×'+i.qty;}).join(', ');
-    var total=(o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
-    return '<tr><td style="font-weight:700;color:var(--red)">'+o.ref+'</td><td>'+o.customerName+'</td><td>'+o.phone+'</td>'
-      +'<td style="font-size:11px">'+o.batchRef+'</td>'
-      +'<td style="max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+mods+'</td>'
-      +'<td style="font-weight:600">$'+total.toFixed(2)+'</td>'
-      +'<td style="font-size:11px;color:var(--muted)">'+new Date(o.createdAt).toLocaleDateString('en-GB')+'</td></tr>';
-  }).join('');
+  if(batchId){
+    S._filteredPreorders=(S.adminPreorders||[]).filter(function(po){
+      return (po.batchOrders||[]).some(function(bo){return bo.batchId===batchId;});
+    });
+  } else {
+    S._filteredPreorders=null;
+  }
+  renderAdminOrders();
 }
-
 function renderAdminCustomers(){
   var tbody=document.getElementById('a-customers-table');
   if(!tbody) return;
@@ -1544,11 +1591,13 @@ async function deleteCustomer(){
 }
 
 function exportCSV(){
-  var rows=[['Ref','Customer','Phone','Batch Ref','Batch Title','Models','Total BND','Date']];
-  S.adminOrders.forEach(function(o){
-    var mods=(o.items||[]).map(function(i){return i.name+' x'+i.qty;}).join('; ');
-    var total=(o.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
-    rows.push([o.ref,o.customerName,o.phone,o.batchRef,o.batchTitle,mods,total.toFixed(2),new Date(o.createdAt).toLocaleDateString('en-GB')]);
+  var rows=[['PO Number','Customer','Phone','Batch Ref','Batch Title','Items','Batch Total','Date']];
+  (S.adminPreorders||[]).forEach(function(po){
+    (po.batchOrders||[]).forEach(function(bo){
+      var mods=(bo.items||[]).map(function(i){return i.name+' x'+i.qty;}).join('; ');
+      var total=(bo.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
+      rows.push([po.poNumber,po.customerName,po.phone,bo.batchRef,bo.batchTitle,mods,total.toFixed(2),new Date(po.createdAt).toLocaleDateString('en-GB')]);
+    });
   });
   var csv=rows.map(function(r){return r.map(function(c){return '"'+String(c).replace(/"/g,'""')+'"';}).join(',');}).join('\n');
   var a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
