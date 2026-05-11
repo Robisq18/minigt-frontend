@@ -1482,11 +1482,16 @@ function renderAdminOrders(){
     var batchRowsHtml=(po.batchOrders||[]).map(function(bo){
       var sub=(bo.items||[]).reduce(function(a,i){return a+i.qty*i.price;},0);
       grandTotal+=sub;
-      var mods=(bo.items||[]).map(function(i){return i.name+' x'+i.qty;}).join(', ');
+      var mods=(bo.items||[]).map(function(i){
+        return '<div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:0.5px solid #EEEDE9">'
+          +'<span>'+i.name+'</span>'
+          +'<span style="margin-left:16px;white-space:nowrap;font-weight:600">x'+i.qty+' &nbsp; $'+(i.price*i.qty).toFixed(2)+'</span>'
+          +'</div>';
+      }).join('');
       return '<tr style="background:#FAFAFA">'
-        +'<td style="padding-left:28px;font-size:11px;color:var(--muted)" colspan="2">&rarr; '+bo.batchRef+' &mdash; '+bo.batchTitle+'</td>'
-        +'<td colspan="3" style="font-size:12px;color:var(--muted)">'+mods+'</td>'
-        +'<td style="font-size:12px;font-weight:600">$'+sub.toFixed(2)+'</td>'
+        +'<td style="padding-left:28px;font-size:11px;font-weight:700;color:var(--muted);vertical-align:top;white-space:nowrap" colspan="2">&rarr; '+bo.batchRef+'<br><span style="font-weight:400">'+bo.batchTitle+'</span></td>'
+        +'<td colspan="3" style="font-size:12px;padding:8px">'+mods+'</td>'
+        +'<td style="font-size:12px;font-weight:700;vertical-align:top;white-space:nowrap">$'+sub.toFixed(2)+'</td>'
         +'<td></td></tr>';
     }).join('');
 
