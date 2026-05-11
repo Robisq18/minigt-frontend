@@ -1001,13 +1001,8 @@ async function submitOrder(){
       Object.keys(S._batchProducts).forEach(function(bid){refreshBatchInner(bid);});
     } else if(d.conflicts && d.conflicts.length){
       // Multiple batch conflicts - show all of them
-      var msg='You have already ordered from the following batch'+(d.conflicts.length>1?'es':'')+':
-
-'
-        +d.conflicts.map(function(c){return '• '+c;}).join('
-');
-      showOrderError(msg.replace(/
-/g,'<br>'));
+      var msg='You have already ordered from the following batch'+(d.conflicts.length>1?'es':'')+': <br>'+ d.conflicts.map(function(c){return '&bull; '+c;}).join('<br>');
+      showOrderError(msg);
     } else {
       showOrderError(d.error||'Error submitting order');
     }
