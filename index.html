@@ -220,6 +220,15 @@
     .toast.show{display:block}
     /* Image upload input hidden */
     #img-upload-input{display:none}
+    /* MOBILE MENU */
+    .mm-item{display:block;width:100%;text-align:left;padding:13px 20px;border:none;background:none;font-size:15px;font-family:var(--font-body);color:var(--text);cursor:pointer;font-weight:500}
+    .mm-item:hover{background:var(--bg)}
+    .nav-desktop{display:flex;align-items:center;gap:6px}
+    .nav-mobile{display:none;align-items:center;gap:6px}
+    @media(max-width:640px){
+      .nav-desktop{display:none}
+      .nav-mobile{display:flex}
+    }
     @media(max-width:600px){
       .admin-stats{grid-template-columns:1fr 1fr}
       .two-col,.three-col{grid-template-columns:1fr}
@@ -233,14 +242,36 @@
 <nav class="nav">
   <div class="nav-brand">🚗 MINI GT <span>Brunei</span></div>
   <div class="nav-right">
-    <span class="nav-user" id="nav-user-name" style="display:none"></span>
-    <button class="nav-tab active" id="nav-shop" onclick="showPage('shop',this)">Pre-Order</button>
-    <button class="nav-tab" id="nav-history" onclick="showPage('history',this)" style="display:none">My Orders</button>
-    <button class="nav-tab" id="nav-account" onclick="showPage('account',this)" style="display:none">Account</button>
-    <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)">Admin</button>
-    <button class="nav-btn" id="nav-auth-btn" onclick="handleNavAuth()">Login</button>
+    <!-- Desktop nav (hidden on mobile) -->
+    <div class="nav-desktop">
+      <span class="nav-user" id="nav-user-name" style="display:none"></span>
+      <button class="nav-tab active" id="nav-shop" onclick="showPage('shop',this)">Pre-Order</button>
+      <button class="nav-tab" id="nav-history" onclick="showPage('history',this)" style="display:none">My Orders</button>
+      <button class="nav-tab" id="nav-account" onclick="showPage('account',this)" style="display:none">Account</button>
+      <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)">Admin</button>
+      <button class="nav-btn" id="nav-auth-btn" onclick="handleNavAuth()">Login</button>
+    </div>
+    <!-- Mobile hamburger -->
+    <div class="nav-mobile">
+      <button class="nav-tab active" id="nav-shop-m" onclick="showPage('shop',document.getElementById('nav-shop'));closeMobileMenu()">Pre-Order</button>
+      <button class="nav-btn" id="nav-hamburger" onclick="toggleMobileMenu()">☰</button>
+    </div>
   </div>
 </nav>
+
+<!-- Mobile dropdown menu -->
+<div id="mobile-menu" style="display:none;position:fixed;top:54px;right:0;left:0;background:#fff;z-index:99;box-shadow:0 4px 20px rgba(0,0,0,0.15);border-top:0.5px solid var(--border)">
+  <div style="padding:8px 0">
+    <div id="mm-user" style="display:none;padding:12px 20px;border-bottom:0.5px solid var(--border);font-size:14px;font-weight:600;color:var(--text)"></div>
+    <button class="mm-item" onclick="showPage('shop',document.getElementById('nav-shop'));closeMobileMenu()">🚗 Pre-Order</button>
+    <button class="mm-item" id="mm-history" onclick="showPage('history',document.getElementById('nav-history'));closeMobileMenu()" style="display:none">📦 My Orders</button>
+    <button class="mm-item" id="mm-account" onclick="showPage('account',document.getElementById('nav-account'));closeMobileMenu()" style="display:none">👤 Account</button>
+    <div style="border-top:0.5px solid var(--border);margin:4px 0"></div>
+    <button class="mm-item" onclick="showPage('admin',document.getElementById('nav-admin-tab'));closeMobileMenu()">⚙️ Admin</button>
+    <div style="border-top:0.5px solid var(--border);margin:4px 0"></div>
+    <button class="mm-item" id="mm-auth-btn" onclick="handleNavAuth();closeMobileMenu()">Login</button>
+  </div>
+</div>
 
 <!-- ═══ SHOP PAGE ═══ -->
 <div class="page active" id="page-shop">
@@ -1068,12 +1099,25 @@ function updateNavAuth(){
   var nameEl=document.getElementById('nav-user-name');
   var hist=document.getElementById('nav-history');
   var acc=document.getElementById('nav-account');
+  // Mobile menu elements
+  var mmUser=document.getElementById('mm-user');
+  var mmHist=document.getElementById('mm-history');
+  var mmAcc=document.getElementById('mm-account');
+  var mmAuth=document.getElementById('mm-auth-btn');
   if(S.customer){
     btn.textContent='Logout';
     nameEl.textContent=S.customer.firstName+' '+S.customer.lastName;
     nameEl.style.display='';hist.style.display='';acc.style.display='';
+    if(mmUser){mmUser.textContent=S.customer.firstName+' '+S.customer.lastName;mmUser.style.display='';}
+    if(mmHist)mmHist.style.display='';
+    if(mmAcc)mmAcc.style.display='';
+    if(mmAuth)mmAuth.textContent='Logout';
   }else{
     btn.textContent='Login';nameEl.style.display='none';hist.style.display='none';acc.style.display='none';
+    if(mmUser)mmUser.style.display='none';
+    if(mmHist)mmHist.style.display='none';
+    if(mmAcc)mmAcc.style.display='none';
+    if(mmAuth)mmAuth.textContent='Login';
   }
 }
 
@@ -1749,6 +1793,23 @@ function closeLightbox(){
 }
 // Close lightbox on Escape key
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeLightbox();});
+
+// ── MOBILE MENU ───────────────────────────────────────────
+function toggleMobileMenu(){
+  var menu=document.getElementById('mobile-menu');
+  menu.style.display=menu.style.display==='none'?'block':'none';
+}
+function closeMobileMenu(){
+  document.getElementById('mobile-menu').style.display='none';
+}
+// Close menu when clicking outside
+document.addEventListener('click',function(e){
+  var menu=document.getElementById('mobile-menu');
+  var hamburger=document.getElementById('nav-hamburger');
+  if(menu&&hamburger&&!menu.contains(e.target)&&!hamburger.contains(e.target)){
+    menu.style.display='none';
+  }
+});
 
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2800);}
 
