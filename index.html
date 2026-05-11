@@ -1859,16 +1859,19 @@ function checkMaintenance(){ return localStorage.getItem('maintenanceMode')==='t
 
 function applyMaintenance(force){
   var isOn = checkMaintenance();
-  // Admin bypass — unless force=true (used for preview)
+  // Admin bypass
   if(!force && (S.adminToken || window.location.hash==='#admin')) return;
   var mp = document.getElementById('page-maintenance');
+  var nav = document.querySelector('nav.nav');
   if(!mp) return;
   if(isOn){
+    // Hide all pages and nav
     document.querySelectorAll('.page').forEach(function(x){ x.classList.remove('active'); });
     mp.classList.add('active');
+    if(nav) nav.style.display='none';
   } else {
     mp.classList.remove('active');
-    // Restore shop page if nothing is active
+    if(nav) nav.style.display='';
     if(!document.querySelector('.page.active')){
       document.getElementById('page-shop').classList.add('active');
     }
