@@ -610,6 +610,56 @@ async function boot() {
   updateNavAuth();
   await loadBatches();
   setInterval(updateCountdown, 1000);
+
+  // Restore admin session if still active
+  var savedAdminToken = localStorage.getItem('adminToken');
+  var lastActive = parseInt(localStorage.getItem('adminLastActive')||'0');
+  var fifteenMin = 15*60*1000;
+  if(savedAdminToken && (Date.now()-lastActive) < fifteenMin){
+    // Validate token is still accepted by backend
+    try {
+      var testR = await fetch(API+'/api/admin/batches', {headers:{Authorization:'Bearer '+savedAdminToken}});
+      if(testR.ok){
+        S.adminToken = savedAdminToken;
+        localStorage.setItem('adminLastActive', Date.now());
+      } else {
+        localStorage.removeItem('adminToken');
+        localStorage.removeItem('adminLastActive');
+      }
+    } catch(e) {
+      // Network error — keep token, try again later
+      S.adminToken = savedAdminToken;
+    }
+  } else if(savedAdminToken) {
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminLastActive');
+  }
+
+  // Restore last page if admin was on admin page
+  var lastPage = localStorage.getItem('lastPage');
+  if(S.adminToken && lastPage === 'admin'){
+    showPage('admin', document.getElementById('nav-admin-tab'));
+    document.getElementById('nav-admin-tab').classList.add('active');
+    document.getElementById('nav-shop').classList.remove('active');
+  }
+
+  // Inactivity timer — log out admin after 15 min
+  var _adminActivityTimer = null;
+  function resetAdminTimer(){
+    if(!S.adminToken) return;
+    localStorage.setItem('adminLastActive', Date.now());
+    clearTimeout(_adminActivityTimer);
+    _adminActivityTimer = setTimeout(function(){
+      if(S.adminToken){
+        adminLogout();
+        toast('Admin session expired due to inactivity.');
+      }
+    }, fifteenMin);
+  }
+  document.addEventListener('mousemove', resetAdminTimer);
+  document.addEventListener('keydown', resetAdminTimer);
+  document.addEventListener('click', resetAdminTimer);
+  if(S.adminToken) resetAdminTimer();
 }
 
 async function loadBatches() {
@@ -1211,7 +1261,7 @@ async function adminLogin(){
   try{
     var r=await fetch(API+'/api/admin/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw})});
     var d=await r.json();
-    if(d.token){S.adminToken=d.token;showAdminPanel();}
+    if(d.token){S.adminToken=d.token;localStorage.setItem('adminToken',d.token);localStorage.setItem('adminLastActive',Date.now());showAdminPanel();}
     else toast('Incorrect password');
   }catch(e){toast('Connection error. Please try again.');}
   btn.disabled=false;btn.textContent='Sign In';
@@ -1657,7 +1707,13 @@ function switchAdminTab(tab,el){
   if(el)el.classList.add('active');
 }
 
-function adminLogout(){S.adminToken=null;document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none';}
+function adminLogout(){
+  S.adminToken=null;
+  localStorage.removeItem('adminToken');
+  localStorage.removeItem('adminLastActive');
+  document.getElementById('admin-login-wrap').style.display='';
+  document.getElementById('admin-panel').style.display='none';
+}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 
 // ── NAV ────────────────────────────────────────────────────
@@ -1666,7 +1722,11 @@ function showPage(p,activeEl){
   document.querySelectorAll('.nav-tab').forEach(function(x){x.classList.remove('active');});
   document.getElementById('page-'+p).classList.add('active');
   if(activeEl)activeEl.classList.add('active');
-  if(p==='admin'&&!S.adminToken){document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none';}
+  localStorage.setItem('lastPage', p);
+  if(p==='admin'){
+    if(S.adminToken){ showAdminPanel(); }
+    else{ document.getElementById('admin-login-wrap').style.display='';document.getElementById('admin-panel').style.display='none'; }
+  }
   if(p==='auth')switchAuthTab(S.currentAuthTab);
   if(p==='shop') loadBatches();
   if(p==='history'){if(S.customer)loadHistory();else showPage('auth',null);}
