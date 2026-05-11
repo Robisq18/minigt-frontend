@@ -271,7 +271,8 @@
         <div class="order-panel">
           <h3>👤 Ordering as</h3>
           <div id="flow-customer-info" style="font-size:14px;color:var(--muted);line-height:1.9"></div>
-          <div style="margin-top:14px;display:flex;justify-content:space-between;gap:8px">
+          <div id="order-error-msg" style="display:none;background:var(--red-light);color:var(--red);font-size:13px;font-weight:600;padding:10px 14px;border-radius:7px;margin-top:10px"></div>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;gap:8px">
             <button class="btn btn-outline btn-sm" onclick="closeOrderFlow()">← Back</button>
             <button class="btn btn-red" onclick="submitOrder()">🎉 Place Pre-Order</button>
           </div>
@@ -918,7 +919,17 @@ function openOrderFlow(){
   document.getElementById('order-flow').scrollIntoView({behavior:'smooth',block:'start'});
 }
 
-function closeOrderFlow(){document.getElementById('order-flow').style.display='none';}
+function closeOrderFlow(){
+  document.getElementById('order-flow').style.display='none';
+  var errEl=document.getElementById('order-error-msg');
+  if(errEl){errEl.style.display='none';errEl.textContent='';}
+}
+
+function showOrderError(msg){
+  var errEl=document.getElementById('order-error-msg');
+  if(errEl){errEl.textContent=msg;errEl.style.display='';errEl.scrollIntoView({behavior:'smooth',block:'nearest'});}
+  else toast(msg);
+}
 function closeLoginPrompt(){document.getElementById('login-prompt').style.display='none';}
 function goToAuth(){closeLoginPrompt();showPage('auth',null);document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));}
 
@@ -987,12 +998,11 @@ async function submitOrder(){
       document.getElementById('flow-step1').style.display='none';
       document.getElementById('flow-success').style.display='';
       S.cart={};updateCartFloat();
-      // Refresh all batch cards
       Object.keys(S._batchProducts).forEach(function(bid){refreshBatchInner(bid);});
     } else {
-      toast(d.error||'Error submitting order');
+      showOrderError(d.error||'Error submitting order');
     }
-  }catch(e){toast('Connection error. Please try again.');}
+  }catch(e){showOrderError('Connection error. Please try again.');}
   btn.disabled=false;btn.textContent='Place Pre-Order';
 }
 function resetAfterOrder(){document.getElementById('order-flow').style.display='none';}
