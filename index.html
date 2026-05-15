@@ -1401,7 +1401,10 @@ async function submitDepositFile(poNumber, input, btn){
         body: JSON.stringify({imageData: e.target.result, fileName: file.name})
       });
       var d = await r.json();
-      if(d.success){ toast('Receipt uploaded successfully!'); loadHistory(); }
+      if(d.success){
+        toast('Receipt uploaded! Pending verification.');
+        await loadHistory();
+      }
       else{ toast(d.error||'Upload failed'); if(btn){btn.disabled=false;btn.textContent='Upload Receipt';} }
     }catch(err){
       console.error('Deposit upload error:', err);
