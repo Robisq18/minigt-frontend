@@ -1326,8 +1326,15 @@ async function loadHistory(){
       if(depositStatus === 'unpaid'){
         depositStatusHtml = '<span class="deposit-status ds-unpaid">Awaiting Deposit</span>';
         depositActionHtml = '<div style="margin-top:10px">'
-          +'<label class="btn btn-red btn-sm" style="cursor:pointer" for="dep-upload-'+po.poNumber+'">Upload Bank Transfer Screenshot</label>'
-          +'<input type="file" id="dep-upload-'+po.poNumber+'" class="dep-file-input" data-po="'+po.poNumber+'" accept="image/*" style="display:none">'
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+          +'<label class="btn btn-outline btn-sm" style="cursor:pointer" for="dep-select-'+po.poNumber+'">Select Receipt Image</label>'
+          +'<input type="file" id="dep-select-'+po.poNumber+'" class="dep-file-select" data-po="'+po.poNumber+'" accept="image/*" style="display:none">'
+          +'<span id="dep-filename-'+po.poNumber+'" style="font-size:12px;color:var(--muted)">No file selected</span>'
+          +'</div>'
+          +'<div id="dep-preview-wrap-'+po.poNumber+'" style="display:none;margin-top:8px">'
+          +'<img id="dep-preview-'+po.poNumber+'" style="max-width:200px;border-radius:6px;border:0.5px solid var(--border);display:block;margin-bottom:8px">'
+          +'<button class="btn btn-red btn-sm dep-upload-btn" data-po="'+po.poNumber+'">Upload Receipt</button>'
+          +'</div>'
           +'</div>';
       } else if(depositStatus === 'pending'){
         depositStatusHtml = '<span class="deposit-status ds-pending">Pending Verification</span>';
@@ -1340,8 +1347,15 @@ async function loadHistory(){
       } else if(depositStatus === 'rejected'){
         depositStatusHtml = '<span class="deposit-status ds-rejected">Deposit Rejected</span>';
         depositActionHtml = '<div style="margin-top:8px;font-size:12px;color:#991B1B;margin-bottom:8px">Reason: '+(po.depositNote||'Unclear image')+'</div>'
-          +'<label class="btn btn-red btn-sm" style="cursor:pointer" for="dep-reupload-'+po.poNumber+'">Re-upload Screenshot</label>'
-          +'<input type="file" id="dep-reupload-'+po.poNumber+'" class="dep-file-input" data-po="'+po.poNumber+'" accept="image/*" style="display:none">';
+          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+          +'<label class="btn btn-outline btn-sm" style="cursor:pointer" for="dep-select-'+po.poNumber+'">Select New Receipt Image</label>'
+          +'<input type="file" id="dep-select-'+po.poNumber+'" class="dep-file-select" data-po="'+po.poNumber+'" accept="image/*" style="display:none">'
+          +'<span id="dep-filename-'+po.poNumber+'" style="font-size:12px;color:var(--muted)">No file selected</span>'
+          +'</div>'
+          +'<div id="dep-preview-wrap-'+po.poNumber+'" style="display:none;margin-top:8px">'
+          +'<img id="dep-preview-'+po.poNumber+'" style="max-width:200px;border-radius:6px;border:0.5px solid var(--border);display:block;margin-bottom:8px">'
+          +'<button class="btn btn-red btn-sm dep-upload-btn" data-po="'+po.poNumber+'">Upload Receipt</button>'
+          +'</div>';
       }
 
       return '<div class="history-card">'
@@ -1374,11 +1388,10 @@ async function loadHistory(){
   }catch(e){document.getElementById('history-loading').style.display='none';document.getElementById('history-empty').style.display='';}
 }
 
-async function submitDeposit(poNumber, input){
+async function submitDepositFile(poNumber, input, btn){
   var file = input.files[0];
-  if(!file) return;
-  if(file.size > 5*1024*1024){ toast('Image must be under 5MB'); input.value=''; return; }
-  toast('Uploading screenshot...');
+  if(!file){ if(btn){btn.disabled=false;btn.textContent='Upload Receipt';} return; }
+  if(file.size > 5*1024*1024){ toast('Image must be under 5MB'); if(btn){btn.disabled=false;btn.textContent='Upload Receipt';} return; }
   var reader = new FileReader();
   reader.onload = async function(e){
     try{
@@ -1388,9 +1401,13 @@ async function submitDeposit(poNumber, input){
         body: JSON.stringify({imageData: e.target.result, fileName: file.name})
       });
       var d = await r.json();
-      if(d.success){ toast('Deposit screenshot submitted!'); loadHistory(); }
-      else toast(d.error||'Upload failed');
-    }catch(err){ toast('Connection error'); }
+      if(d.success){ toast('Receipt uploaded successfully!'); loadHistory(); }
+      else{ toast(d.error||'Upload failed'); if(btn){btn.disabled=false;btn.textContent='Upload Receipt';} }
+    }catch(err){
+      console.error('Deposit upload error:', err);
+      toast('Upload failed. Please check your connection and try again.');
+      if(btn){btn.disabled=false;btn.textContent='Upload Receipt';}
+    }
     input.value='';
   };
   reader.readAsDataURL(file);
@@ -2079,16 +2096,40 @@ document.addEventListener('click', function(e){
   if(verifyBtn){ e.stopPropagation(); adminVerifyDeposit(verifyBtn.getAttribute('data-po2'), verifyBtn.getAttribute('data-verify')); return; }
 });
 
-// Deposit file input handler
+// Deposit file SELECT handler - show preview
 document.addEventListener('change', function(e){
-  var input = e.target.closest('.dep-file-input');
-  if(input){ submitDeposit(input.getAttribute('data-po'), input); }
+  var input = e.target.closest('.dep-file-select');
+  if(!input) return;
+  var file = input.files[0];
+  if(!file) return;
+  var po = input.getAttribute('data-po');
+  var filenameEl = document.getElementById('dep-filename-'+po);
+  var previewWrap = document.getElementById('dep-preview-wrap-'+po);
+  var previewImg = document.getElementById('dep-preview-'+po);
+  if(filenameEl) filenameEl.textContent = file.name;
+  if(previewWrap && previewImg){
+    var reader = new FileReader();
+    reader.onload = function(e){ previewImg.src = e.target.result; previewWrap.style.display=''; };
+    reader.readAsDataURL(file);
+  }
 });
 
 // Deposit image click to zoom
 document.addEventListener('click', function(e){
   var depImg = e.target.closest('.dep-img-click');
-  if(depImg){ openLightbox(depImg.src, 'Deposit Screenshot', e); }
+  if(depImg){ openLightbox(depImg.src, 'Deposit Screenshot', e); return; }
+  // Deposit upload button
+  var uploadBtn = e.target.closest('.dep-upload-btn');
+  if(uploadBtn){
+    var po = uploadBtn.getAttribute('data-po');
+    var fileInput = document.getElementById('dep-select-'+po);
+    if(fileInput && fileInput.files[0]){
+      uploadBtn.disabled=true;uploadBtn.textContent='Uploading...';
+      submitDepositFile(po, fileInput, uploadBtn);
+    } else {
+      toast('Please select a file first');
+    }
+  }
 });
 
 boot();
