@@ -1290,7 +1290,7 @@ async function loadHistory(){
     document.getElementById('history-loading').style.display='none';
     var preorders=d.preorders||[];
     if(!preorders.length){document.getElementById('history-empty').style.display='';return;}
-    document.getElementById('history-list').innerHTML=preorders.map(function(po){
+    document.getElementById('history-list').innerHTML=preorders.map(function(po,idx){
       var grandTotal=0;
       var batchesHtml=(po.batchOrders||[]).map(function(bo){
         var items=(bo.items||[]).map(function(i){
@@ -1304,75 +1304,74 @@ async function loadHistory(){
           +'</div>';
       }).join('');
 
-      // Deposit calculation - 25% rounded up to nearest dollar
       var deposit = Math.ceil(grandTotal * 0.25);
       var depositStatus = po.depositStatus || 'unpaid';
-      var depositStatusHtml = '';
-      var depositActionHtml = '';
+      var depositStatusHtml = depositStatus==='confirmed'?'<span class="deposit-status ds-confirmed">Deposit Confirmed</span>'
+        :depositStatus==='pending'?'<span class="deposit-status ds-pending">Pending Verification</span>'
+        :depositStatus==='rejected'?'<span class="deposit-status ds-rejected">Deposit Rejected</span>'
+        :'<span class="deposit-status ds-unpaid">Awaiting Deposit</span>';
 
-      // 1-hour warning
       var createdMs = new Date(po.createdAt).getTime();
       var oneHour = 60*60*1000;
       var elapsed = Date.now() - createdMs;
       var warningHtml = '';
-      if(depositStatus === 'unpaid' && elapsed < oneHour){
-        var remaining = Math.ceil((oneHour - elapsed) / 60000);
-        warningHtml = '<div class="deposit-warning">&#9888; Please submit your deposit within '
-          +remaining+' minute'+(remaining!==1?'s':'')+'. Pre-order may be cancelled if deposit is not received.</div>';
-      } else if(depositStatus === 'unpaid' && elapsed >= oneHour){
-        warningHtml = '<div class="deposit-warning">&#9888; Deposit overdue! Please contact us immediately or your pre-order may be cancelled.</div>';
+      if(depositStatus==='unpaid' && elapsed<oneHour){
+        var remaining=Math.ceil((oneHour-elapsed)/60000);
+        warningHtml='<div class="deposit-warning">&#9888; Please submit deposit within '+remaining+' minute'+(remaining!==1?'s':'')+'. Pre-order may be cancelled if not received.</div>';
+      } else if(depositStatus==='unpaid' && elapsed>=oneHour){
+        warningHtml='<div class="deposit-warning">&#9888; Deposit overdue! Please contact us immediately.</div>';
       }
 
-      if(depositStatus === 'unpaid'){
-        depositStatusHtml = '<span class="deposit-status ds-unpaid">Awaiting Deposit</span>';
-        depositActionHtml = '<div style="margin-top:10px">'
-          +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
+      var depositActionHtml='';
+      if(depositStatus==='unpaid'){
+        depositActionHtml='<div style="margin-top:10px"><div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
           +'<label class="btn btn-outline btn-sm" style="cursor:pointer" for="dep-select-'+po.poNumber+'">Select Receipt Image</label>'
           +'<input type="file" id="dep-select-'+po.poNumber+'" class="dep-file-select" data-po="'+po.poNumber+'" accept="image/*" style="display:none">'
           +'<span id="dep-filename-'+po.poNumber+'" style="font-size:12px;color:var(--muted)">No file selected</span>'
           +'</div>'
           +'<div id="dep-preview-wrap-'+po.poNumber+'" style="display:none;margin-top:8px">'
-          +'<img id="dep-preview-'+po.poNumber+'" style="max-width:200px;border-radius:6px;border:0.5px solid var(--border);display:block;margin-bottom:8px">'
+          +'<img id="dep-preview-'+po.poNumber+'" style="max-width:120px;border-radius:6px;border:0.5px solid var(--border);display:block;margin-bottom:8px;cursor:zoom-in" class="dep-img-click">'
           +'<button class="btn btn-red btn-sm dep-upload-btn" data-po="'+po.poNumber+'">Upload Receipt</button>'
-          +'</div>'
-          +'</div>';
-      } else if(depositStatus === 'pending'){
-        depositStatusHtml = '<span class="deposit-status ds-pending">Pending Verification</span>';
-        var imgHtml = po.depositImage ? '<img src="'+API+po.depositImage+'" class="deposit-img-preview dep-img-click">' : '';
-        depositActionHtml = '<div style="margin-top:8px;font-size:12px;color:var(--muted)">Screenshot submitted. Awaiting admin verification.</div>'+imgHtml;
-      } else if(depositStatus === 'confirmed'){
-        depositStatusHtml = '<span class="deposit-status ds-confirmed">Deposit Confirmed</span>';
-        var imgHtml2 = po.depositImage ? '<img src="'+API+po.depositImage+'" class="deposit-img-preview dep-img-click">' : '';
-        depositActionHtml = '<div style="margin-top:8px;font-size:12px;color:#065F46;font-weight:600">Pre-order confirmed! Thank you.</div>'+imgHtml2;
-      } else if(depositStatus === 'rejected'){
-        depositStatusHtml = '<span class="deposit-status ds-rejected">Deposit Rejected</span>';
-        depositActionHtml = '<div style="margin-top:8px;font-size:12px;color:#991B1B;margin-bottom:8px">Reason: '+(po.depositNote||'Unclear image')+'</div>'
+          +'</div></div>';
+      } else if(depositStatus==='pending'){
+        var imgHtml=po.depositImage?'<img src="'+API+po.depositImage+'" class="dep-img-click" style="width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:0.5px solid var(--border);margin-top:6px;display:block">':'';
+        depositActionHtml='<div style="margin-top:8px;font-size:12px;color:var(--muted)">Screenshot submitted. Awaiting admin verification.</div>'+imgHtml;
+      } else if(depositStatus==='confirmed'){
+        var imgHtml2=po.depositImage?'<img src="'+API+po.depositImage+'" class="dep-img-click" style="width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:zoom-in;border:0.5px solid var(--border);margin-top:6px;display:block">':'';
+        depositActionHtml='<div style="margin-top:8px;font-size:12px;color:#065F46;font-weight:600">Pre-order confirmed! Thank you.</div>'+imgHtml2;
+      } else if(depositStatus==='rejected'){
+        depositActionHtml='<div style="margin-top:8px;font-size:12px;color:#991B1B;margin-bottom:8px">Reason: '+(po.depositNote||'Unclear image')+'</div>'
           +'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'
           +'<label class="btn btn-outline btn-sm" style="cursor:pointer" for="dep-select-'+po.poNumber+'">Select New Receipt Image</label>'
           +'<input type="file" id="dep-select-'+po.poNumber+'" class="dep-file-select" data-po="'+po.poNumber+'" accept="image/*" style="display:none">'
           +'<span id="dep-filename-'+po.poNumber+'" style="font-size:12px;color:var(--muted)">No file selected</span>'
           +'</div>'
           +'<div id="dep-preview-wrap-'+po.poNumber+'" style="display:none;margin-top:8px">'
-          +'<img id="dep-preview-'+po.poNumber+'" style="max-width:200px;border-radius:6px;border:0.5px solid var(--border);display:block;margin-bottom:8px">'
+          +'<img id="dep-preview-'+po.poNumber+'" style="max-width:120px;border-radius:6px;border:0.5px solid var(--border);display:block;margin-bottom:8px;cursor:zoom-in" class="dep-img-click">'
           +'<button class="btn btn-red btn-sm dep-upload-btn" data-po="'+po.poNumber+'">Upload Receipt</button>'
           +'</div>';
       }
 
-      return '<div class="history-card">'
-        +'<div style="display:flex;justify-content:space-between;align-items:flex-start">'
-        +'<div><div style="font-size:11px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.4px">Pre-Order Number</div>'
-        +'<div style="font-family:var(--font-head);font-size:22px;letter-spacing:1px;color:var(--red)">'+po.poNumber+'</div>'
-        +'</div>'
-        +'<div style="font-size:12px;color:var(--muted);text-align:right">'+new Date(po.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'</div>'
-        +'</div>'
+      // Timestamp with date and time
+      var ts = new Date(po.createdAt);
+      var tsStr = ts.toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})
+        +' '+ts.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+      var cardId = 'hcard-body-'+idx;
+      return '<div class="history-card" style="padding:0;overflow:hidden">'
+                // Header - always visible, click to expand
+        +'<div class="hcard-toggle" data-target="'+cardId+'" style="padding:16px 18px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:12px">'
++'</div>'
+        // Body - collapsible
+        +'<div id="'+cardId+'" style="display:none;padding:0 18px 16px;border-top:0.5px solid var(--border)">'
         +batchesHtml
         +'<div class="history-total" style="margin-top:10px"><span>Order Total</span><span>BND $'+grandTotal.toFixed(2)+'</span></div>'
-        // Deposit box
         +'<div class="deposit-box">'
         +'<h4>&#128181; Deposit Required '+depositStatusHtml+'</h4>'
         +'<div class="deposit-amount">BND $'+deposit+' <span>25% deposit</span></div>'
         +warningHtml
         +depositActionHtml
+        +'</div>'
         +'</div>'
         +'</div>';
     }).join('');
@@ -1785,7 +1784,7 @@ function renderAdminOrders(){
       +'<td style="font-size:11px;color:var(--red)">&#9660; expand</td>'
       +'<td style="font-weight:700">$'+grandTotal.toFixed(2)+'<br><span style="font-size:10px;color:var(--muted);font-weight:400">Dep: $'+deposit+'</span></td>'
       +'<td>'+depBadge+'</td>'
-      +'<td style="font-size:11px;color:var(--muted);white-space:nowrap">'+new Date(po.createdAt).toLocaleDateString('en-GB')+'</td>'
+      +'<td style="font-size:11px;color:var(--muted);white-space:nowrap">'+new Date(po.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})+'<br>'+new Date(po.createdAt).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})+'</td>'
       +'<td><button class="btn btn-danger btn-sm" style="white-space:nowrap" data-po="'+po.poNumber+'">Delete</button></td>';
 
     // Build deposit section for expand row
@@ -1793,7 +1792,7 @@ function renderAdminOrders(){
       +'<div style="font-size:12px;font-weight:700;margin-bottom:10px">Deposit: BND $'+deposit+' &nbsp; '+depBadge+'</div>';
 
     if(po.depositImage){
-      depositHtml += '<img src="'+API+po.depositImage+'" class="dep-img-click" style="max-width:200px;border-radius:6px;cursor:zoom-in;margin-bottom:10px;display:block;border:0.5px solid var(--border)">';
+      depositHtml += '<img src="'+API+po.depositImage+'" class="dep-img-click" style="width:80px;height:80px;object-fit:cover;border-radius:6px;cursor:zoom-in;margin-bottom:10px;display:block;border:0.5px solid var(--border)">';
     }
     if(po.depositNote){
       depositHtml += '<div style="font-size:12px;color:#991B1B;margin-bottom:8px">Rejection reason: '+po.depositNote+'</div>';
@@ -2078,6 +2077,15 @@ function updateMaintenanceUI(isOn){
   if(card){ card.style.borderColor=isOn?'#F59E0B':'transparent'; card.style.background=isOn?'#FFFBEB':''; }
 }
 
+function toggleHistoryCard(cardId){
+  var body=document.getElementById(cardId);
+  var chev=document.getElementById('chev-'+cardId);
+  if(!body) return;
+  var isOpen=body.style.display!=='none'&&body.style.display!=='';
+  body.style.display=isOpen?'none':'block';
+  if(chev) chev.innerHTML=isOpen?'&#9660;':'&#9650;';
+}
+
 function toast(msg){var t=document.getElementById('toast');t.textContent=msg;t.className='toast show';clearTimeout(t._t);t._t=setTimeout(function(){t.className='toast';},2800);}
 
 // Event delegation for all dynamic buttons and images
@@ -2117,8 +2125,14 @@ document.addEventListener('change', function(e){
   }
 });
 
-// Deposit image click to zoom
+// History card toggle + deposit image zoom
 document.addEventListener('click', function(e){
+  var toggle = e.target.closest('.hcard-toggle');
+  if(toggle){
+    var cardId = toggle.getAttribute('data-target');
+    toggleHistoryCard(cardId);
+    return;
+  }
   var depImg = e.target.closest('.dep-img-click');
   if(depImg){ openLightbox(depImg.src, 'Deposit Screenshot', e); return; }
   // Deposit upload button
