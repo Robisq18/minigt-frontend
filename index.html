@@ -261,6 +261,7 @@
       <button class="nav-tab" id="nav-history" onclick="showPage('history',this)" style="display:none">My Orders</button>
       <button class="nav-tab" id="nav-account" onclick="showPage('account',this)" style="display:none">Account</button>
       <button class="nav-tab" id="nav-admin-tab" onclick="showPage('admin',this)" style="display:none">Admin</button>
+      <button class="nav-btn" id="nav-register-btn" onclick="goToRegister()" style="background:rgba(255,255,255,0.9);color:var(--red);font-weight:700">Register</button>
       <button class="nav-btn" id="nav-auth-btn" onclick="handleNavAuth()">Login</button>
     </div>
     <!-- Mobile hamburger -->
@@ -279,6 +280,7 @@
     <button class="mm-item" id="mm-history" onclick="showPage('history',document.getElementById('nav-history'));closeMobileMenu()" style="display:none">📦 My Orders</button>
     <button class="mm-item" id="mm-account" onclick="showPage('account',document.getElementById('nav-account'));closeMobileMenu()" style="display:none">👤 Account</button>
     <div style="border-top:0.5px solid var(--border);margin:4px 0"></div>
+    <button class="mm-item" id="mm-register-btn" onclick="goToRegister();closeMobileMenu()" style="color:var(--red);font-weight:700">Register</button>
     <button class="mm-item" id="mm-auth-btn" onclick="handleNavAuth();closeMobileMenu()">Login</button>
   </div>
 </div>
@@ -1199,21 +1201,33 @@ function updateNavAuth(){
   var mmHist=document.getElementById('mm-history');
   var mmAcc=document.getElementById('mm-account');
   var mmAuth=document.getElementById('mm-auth-btn');
+  var regBtn=document.getElementById('nav-register-btn');
+  var mmRegBtn=document.getElementById('mm-register-btn');
   if(S.customer){
     btn.textContent='Logout';
     nameEl.textContent=S.customer.firstName+' '+S.customer.lastName;
     nameEl.style.display='';hist.style.display='';acc.style.display='';
+    if(regBtn) regBtn.style.display='none';
+    if(mmRegBtn) mmRegBtn.style.display='none';
     if(mmUser){mmUser.textContent=S.customer.firstName+' '+S.customer.lastName;mmUser.style.display='';}
     if(mmHist)mmHist.style.display='';
     if(mmAcc)mmAcc.style.display='';
     if(mmAuth)mmAuth.textContent='Logout';
   }else{
     btn.textContent='Login';nameEl.style.display='none';hist.style.display='none';acc.style.display='none';
+    if(regBtn) regBtn.style.display='';
+    if(mmRegBtn) mmRegBtn.style.display='';
     if(mmUser)mmUser.style.display='none';
     if(mmHist)mmHist.style.display='none';
     if(mmAcc)mmAcc.style.display='none';
     if(mmAuth)mmAuth.textContent='Login';
   }
+}
+
+function goToRegister(){
+  showPage('auth',null);
+  document.querySelectorAll('.nav-tab').forEach(function(t){t.classList.remove('active');});
+  switchAuthTab('register');
 }
 
 function handleNavAuth(){
