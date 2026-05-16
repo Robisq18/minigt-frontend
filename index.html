@@ -411,6 +411,12 @@
           <div class="field"><label>Password</label><input type="password" id="reg-password" placeholder="At least 6 characters"></div>
           <div class="field"><label>Confirm Password</label><input type="password" id="reg-password2" placeholder="Repeat password"></div>
           <div id="reg-msg1" class="msg"></div>
+          <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;padding:10px 12px;background:var(--bg);border-radius:7px">
+            <input type="checkbox" id="reg-tnc" style="margin-top:3px;width:16px;height:16px;flex-shrink:0;accent-color:var(--red)">
+            <label for="reg-tnc" style="font-size:12px;color:var(--text);cursor:pointer;line-height:1.5">
+              I have read and agree to the <a href="#" onclick="openModal('tnc-modal');return false;" style="color:var(--red);font-weight:700;text-decoration:none">Terms &amp; Conditions</a>. I understand the deposit requirements, payment deadlines, and consequences of forfeiture.
+            </label>
+          </div>
           <button class="btn btn-red btn-full" onclick="regStep1()">Send Verification Code</button>
           <p style="font-size:11px;color:var(--muted);margin-top:10px;text-align:center">A code will be sent to your SMS to verify your number.</p>
         </div>
@@ -637,6 +643,49 @@
   <img id="lightbox-img" src="" style="max-width:90vw;max-height:90vh;object-fit:contain;border-radius:8px;box-shadow:0 8px 40px rgba(0,0,0,0.5)">
   <div style="position:absolute;top:20px;right:24px;color:#fff;font-size:28px;cursor:pointer;line-height:1" onclick="closeLightbox()">✕</div>
 </div>
+<!-- T&C MODAL -->
+<div class="modal-bg" id="tnc-modal">
+  <div class="modal" style="max-width:520px">
+    <h3>Terms &amp; Conditions</h3>
+    <div style="max-height:400px;overflow-y:auto;font-size:13px;line-height:1.7;color:var(--text);padding-right:6px">
+      <p style="font-weight:700;margin-bottom:12px">CONNEX BRUNEI &mdash; MINI GT PRE-ORDER TERMS &amp; CONDITIONS</p>
+
+      <p style="font-weight:700;margin-top:12px">1. Pre-Order Confirmation</p>
+      <p>By placing a pre-order on this platform, you agree to be bound by these terms and conditions. All pre-orders are subject to availability and confirmation by Connex Brunei.</p>
+
+      <p style="font-weight:700;margin-top:12px">2. Deposit Requirement</p>
+      <p>A non-refundable deposit of 25% of your total order value is required to confirm your pre-order. The deposit must be paid within <strong>1 hour</strong> of placing your order. Failure to submit proof of payment within this timeframe may result in your pre-order being cancelled without prior notice.</p>
+
+      <p style="font-weight:700;margin-top:12px">3. Deposit Submission</p>
+      <p>Upon placing your pre-order, you are required to upload a screenshot of your bank transfer as proof of payment via the My Orders page. Your order will remain pending until the deposit is verified by our team.</p>
+
+      <p style="font-weight:700;margin-top:12px">4. Balance Payment</p>
+      <p>The remaining balance (75% of total order value) is due upon arrival of goods. You will be notified once your items have arrived. Full payment must be made within <strong>2 weeks</strong> of the arrival notification.</p>
+
+      <p style="font-weight:700;margin-top:12px">5. Forfeiture of Order</p>
+      <p>If full payment is not received within 2 weeks of the arrival notification, your order will be considered forfeited. Forfeited orders will not be refunded, including any deposit paid.</p>
+
+      <p style="font-weight:700;margin-top:12px">6. Account Ban</p>
+      <p>Customers who forfeit their orders or fail to meet payment obligations will be <strong>permanently banned</strong> from the Connex Brunei pre-order platform and will not be permitted to place future pre-orders.</p>
+
+      <p style="font-weight:700;margin-top:12px">7. Order Cancellation</p>
+      <p>Pre-orders cannot be cancelled once the deposit has been submitted and confirmed. Please ensure your order details are correct before submitting.</p>
+
+      <p style="font-weight:700;margin-top:12px">8. Product Availability</p>
+      <p>All items are subject to availability from the supplier. In the rare event that an item becomes unavailable after your order is confirmed, you will be notified and a full refund of your deposit for that item will be issued.</p>
+
+      <p style="font-weight:700;margin-top:12px">9. Pricing</p>
+      <p>All prices are listed in Brunei Dollars (BND) and are subject to change without notice prior to order confirmation. Once your deposit is confirmed, your order price is locked in.</p>
+
+      <p style="font-weight:700;margin-top:12px">10. Contact</p>
+      <p>For any enquiries regarding your pre-order, please contact us through our official channels.</p>
+    </div>
+    <div style="margin-top:16px;display:flex;justify-content:flex-end">
+      <button class="btn btn-red btn-sm" onclick="closeModal('tnc-modal')">Close</button>
+    </div>
+  </div>
+</div>
+
 <div id="recaptcha-container"></div>
 <div class="toast" id="toast"></div>
 
@@ -1209,6 +1258,8 @@ async function regStep1(){
   var cc=document.getElementById('reg-cc').value;
   var pw=document.getElementById('reg-password').value;
   var pw2=document.getElementById('reg-password2').value;
+  var tncEl=document.getElementById('reg-tnc');
+  if(!tncEl||!tncEl.checked){showMsg('reg-msg1','Please read and agree to the Terms & Conditions to continue','error');return;}
   if(!first){showMsg('reg-msg1','First name required','error');return;}
   if(!last){showMsg('reg-msg1','Last name required','error');return;}
   if(!ph){showMsg('reg-msg1','Phone number required','error');return;}
@@ -1990,6 +2041,7 @@ function adminLogout(){
   document.getElementById('admin-login-wrap').style.display='';
   document.getElementById('admin-panel').style.display='none';
 }
+function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 
 // ── NAV ────────────────────────────────────────────────────
